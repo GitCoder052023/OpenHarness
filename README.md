@@ -29,31 +29,9 @@ OpenHarness is the execution engine under [OpenAgent](https://github.com/GitCode
 
 Your model does the thinking. Your machine does the work.
 
-### From chat to your Mac
-
-An example session in an MCP client such as Claude Desktop or Cursor, with the API server running:
-
-```text
-You:       "Run the tests in this repo. If one fails, read the failing test
-            and open it in my editor. Show me the editor window."
-
-Agent:      bash          pnpm test                 one test fails
-            read          failing test file         inspect the assertion
-            bash          open the file in editor   file on your Mac
-            mac_see       editor window             screenshot returned
-
-Agent:     "Here's the failing assertion, and the file is open in your editor."
-
-You:       "Suggest a fix first. Don't change anything yet."
-```
-
-This is an illustrative workflow, not a recorded test run. The agent decides what to call and how to present the results; OpenHarness handles local execution.
-
 <div align="center">
   <strong>You bring the brain. OpenHarness brings the hands.</strong>
 </div>
-
----
 
 ## Quick Start (60 Seconds)
 
@@ -72,8 +50,6 @@ This is an illustrative workflow, not a recorded test run. The agent decides wha
 5. **Ask a harmless test question**:
    > *"Use OpenHarness to report my machine's system information."*
 6. **Verify the result**: Your agent calls `openharness_execute` and reports real local system data.
-
----
 
 ## Why OpenHarness
 
@@ -324,133 +300,6 @@ The connector exposes a single, unified execution tool:
   }
 }
 ```
-
----
-
-### What the User Experiences
-
-With an MCP client connected, a request becomes a local tool call:
-
-```text
-User:
-"Check my local machine's system information and available disk space."
-
-AI Agent:
-1. Understands the intent and selects OpenHarness.
-2. Formulates and dispatches tool call:
-   openharness_execute(tool="system_info", args={})
-3. The MCP connector sends HTTP POST to the local OpenHarness API server.
-4. OpenHarness executes the tool and returns structured hardware and OS data.
-5. The agent synthesizes a clear response:
-   "You are running macOS 14.5 (Darwin 23.5.0) on an Apple M3 Max with
-    36 GB memory and 482 GB available disk space."
-```
-
----
-
-### What OpenHarness Can Actually Do
-
-OpenHarness exposes **55+ specialized tools** across 5 execution engines:
-
-1. **Developer & Shell Automation**:
-   - `system_info`: Inspect OS, CPU, memory, uptime, battery, and platform details.
-   - `bash`: Sandboxed shell command execution with timeouts and output capture.
-   - `read`: Paginated file reader with line range slicing and byte limits.
-   - `write`: Atomic file creation and writing.
-   - `edit`: Exact-match file block replacement with unified diffs.
-   - `grep` & `glob`: Fast codebase search via ripgrep and file pattern matching.
-   - `applescript`: Execute native macOS AppleScript and JXA automation scripts.
-
-2. **Native macOS Desktop Computer-Use**:
-   - `mac_see`: Take and inspect window screenshots.
-   - `mac_ax`: Query macOS Accessibility (AX) tree for UI elements.
-   - `mac_click`, `mac_type`, `mac_key`: Send clicks, keystrokes, and text to specific applications.
-   - `mac_drag`, `mac_scroll`: Mouse gestures that interact without stealing window focus.
-   - `mac_apps`, `mac_windows`: Enumerate running processes and visible windows.
-
-3. **Real Chrome Browser Control**:
-   - `browser_open`, `browser_tabs`: Launch and manage authenticated Chrome tabs.
-   - `browser_click`, `browser_fill`, `browser_type`: Compositor-level interaction with DOM, shadow DOM, and iframes.
-   - `browser_see`, `browser_eval`: Take browser viewport screenshots and execute JavaScript in page context.
-
-4. **Web Ingestion & Scraping**:
-   - `firecrawl_scrape`, `firecrawl_search`: Scrape dynamic web pages into clean LLM-friendly Markdown.
-   - `firecrawl_crawl`, `firecrawl_map`: Crawl domains and extract sitemaps.
-
-5. **Social Media Automation**:
-   - `social_post`, `social_reply`, `social_like`: Manage authenticated Chrome sessions on Threads, Reddit, X, LinkedIn, and Instagram.
-
----
-
-### Tool Selection & Expected Behavior
-
-- **How the Agent Decides**: The AI agent analyzes your prompt and decides which OpenHarness tool best satisfies the request (e.g. using `read` to view a file, `grep` to find code, or `mac_see` to look at an open window).
-- **Graceful Error Handling**: If the agent asks for an unsupported or misspelled tool name, OpenHarness returns a clear error:
-  `Tool 'foo' execution failed: Unknown harness tool: 'foo'`
-  The MCP connector surfaces this error with `isError: true`. The agent receives the error description and can self-correct without crashing.
-
----
-
-### Verify the Installation
-
-To verify that your setup is working from end to end:
-
-1. **Ensure the API server is running**:
-   ```bash
-   pnpm run server
-   ```
-2. **Verify API server health** in another terminal:
-   ```bash
-   curl http://127.0.0.1:8080/health
-   ```
-   Expected response:
-   ```json
-   {"status":"ok","worker":"ready"}
-   ```
-3. **Ask your AI agent a harmless test request**:
-   > *"Use OpenHarness to report my current macOS version and CPU architecture."*
-4. **Observe the execution**:
-   - In Terminal 1, you will see the API server log the incoming request:
-     `[INFO] POST /api/execute`
-   - Your AI agent will reply with your actual macOS version and CPU details.
-
----
-
-### Troubleshooting
-
-#### 1. MCP Server Does Not Start in AI Client
-- **Check Node.js version**: Ensure you are running Node.js 18 or newer (`node -v`).
-- **Check pnpm**: Verify `pnpm` is installed and accessible in your system PATH (`which pnpm`). If not, configure the absolute path in your MCP client JSON (e.g. `/opt/homebrew/bin/pnpm`).
-- **Check dependencies**: Ensure `pnpm install` ran successfully in the OpenHarness directory.
-
-#### 2. MCP Server Connects, But Tool Calls Fail
-- **Is the API server running?** Check Terminal 1. The MCP connector cannot execute tools without the API server. Start it with `pnpm run server`.
-- **Check API URL**: By default the connector expects `http://127.0.0.1:8080`. If you changed the port via `OPENHARNESS_PORT`, set `OPENHARNESS_API_URL` to match in your MCP configuration.
-- **Worker readiness**: If `curl http://127.0.0.1:8080/health` reports `"worker":"unavailable"`, check that Python dependencies were installed properly with `./install.py`.
-
-#### 3. AI Client Cannot Connect to Server
-- **Check MCP configuration JSON**: Ensure JSON syntax is valid (no trailing commas).
-- **Check working directory**: Verify that your MCP client configuration specifies the correct repository directory, or use the direct `tsx` script path.
-
-#### 4. macOS Permissions Prompt for Desktop Tools
-- When using `mac_see`, `mac_click`, or `mac_ax`, macOS will prompt for **Accessibility** and **Screen Recording** permissions in **System Settings > Privacy & Security**. Grant permissions to your terminal, Python, or AI host app. Run `./install.py` to re-audit permissions anytime.
-
----
-
-### Security & Safe Operation
-
-> [!WARNING]
-> **Security Notice**: OpenHarness runs locally and provides access to powerful computer capabilities (shell commands, file modification, browser control, native macOS automation).
->
-> - **Trusted AI Clients Only**: Only connect AI clients and models that you trust. Treat the MCP connection as an administrative local automation interface.
-> - **Supervise Sensitive Operations**: While developer tools operate within normal macOS user permissions, review destructive shell commands or file operations before approving them.
-> - **Localhost vs. LAN Binding**:
->   - By default, the API server binds to `0.0.0.0:8080`, allowing trusted devices on your private local network (LAN) to access OpenHarness.
->   - To restrict access strictly to the local machine, set:
->     ```bash
->     export OPENHARNESS_HOST=127.0.0.1
->     ```
-> - **Never Expose to the Public Internet**: Do not forward port 8080 on your router, bind to a public IP, or expose OpenHarness through unauthenticated tunnels (e.g. ngrok, Cloudflare Tunnel).
 
 ---
 
@@ -724,6 +573,103 @@ async function executeTool(tool: string, args: Record<string, unknown> = {}) {
 const result = await executeTool("bash", { command: "uname -a" });
 console.log(result);
 ```
+
+---
+
+### What OpenHarness Can Actually Do
+
+OpenHarness exposes **55+ specialized tools** across 5 execution engines:
+
+1. **Developer & Shell Automation**:
+   - `system_info`: Inspect OS, CPU, memory, uptime, battery, and platform details.
+   - `bash`: Sandboxed shell command execution with timeouts and output capture.
+   - `read`: Paginated file reader with line range slicing and byte limits.
+   - `write`: Atomic file creation and writing.
+   - `edit`: Exact-match file block replacement with unified diffs.
+   - `grep` & `glob`: Fast codebase search via ripgrep and file pattern matching.
+   - `applescript`: Execute native macOS AppleScript and JXA automation scripts.
+
+2. **Native macOS Desktop Computer-Use**:
+   - `mac_see`: Take and inspect window screenshots.
+   - `mac_ax`: Query macOS Accessibility (AX) tree for UI elements.
+   - `mac_click`, `mac_type`, `mac_key`: Send clicks, keystrokes, and text to specific applications.
+   - `mac_drag`, `mac_scroll`: Mouse gestures that interact without stealing window focus.
+   - `mac_apps`, `mac_windows`: Enumerate running processes and visible windows.
+
+3. **Real Chrome Browser Control**:
+   - `browser_open`, `browser_tabs`: Launch and manage authenticated Chrome tabs.
+   - `browser_click`, `browser_fill`, `browser_type`: Compositor-level interaction with DOM, shadow DOM, and iframes.
+   - `browser_see`, `browser_eval`: Take browser viewport screenshots and execute JavaScript in page context.
+
+4. **Web Ingestion & Scraping**:
+   - `firecrawl_scrape`, `firecrawl_search`: Scrape dynamic web pages into clean LLM-friendly Markdown.
+   - `firecrawl_crawl`, `firecrawl_map`: Crawl domains and extract sitemaps.
+
+5. **Social Media Automation**:
+   - `social_post`, `social_reply`, `social_like`: Manage authenticated Chrome sessions on Threads, Reddit, X, LinkedIn, and Instagram.
+
+---
+
+### Verify the Installation
+
+To verify that your setup is working from end to end:
+
+1. **Ensure the API server is running**:
+   ```bash
+   pnpm run server
+   ```
+2. **Verify API server health** in another terminal:
+   ```bash
+   curl http://127.0.0.1:8080/health
+   ```
+   Expected response:
+   ```json
+   {"status":"ok","worker":"ready"}
+   ```
+3. **Ask your AI agent a harmless test request**:
+   > *"Use OpenHarness to report my current macOS version and CPU architecture."*
+4. **Observe the execution**:
+   - In Terminal 1, you will see the API server log the incoming request:
+     `[INFO] POST /api/execute`
+   - Your AI agent will reply with your actual macOS version and CPU details.
+
+---
+
+### Troubleshooting
+
+#### 1. MCP Server Does Not Start in AI Client
+- **Check Node.js version**: Ensure you are running Node.js 18 or newer (`node -v`).
+- **Check pnpm**: Verify `pnpm` is installed and accessible in your system PATH (`which pnpm`). If not, configure the absolute path in your MCP client JSON (e.g. `/opt/homebrew/bin/pnpm`).
+- **Check dependencies**: Ensure `pnpm install` ran successfully in the OpenHarness directory.
+
+#### 2. MCP Server Connects, But Tool Calls Fail
+- **Is the API server running?** Check Terminal 1. The MCP connector cannot execute tools without the API server. Start it with `pnpm run server`.
+- **Check API URL**: By default the connector expects `http://127.0.0.1:8080`. If you changed the port via `OPENHARNESS_PORT`, set `OPENHARNESS_API_URL` to match in your MCP configuration.
+- **Worker readiness**: If `curl http://127.0.0.1:8080/health` reports `"worker":"unavailable"`, check that Python dependencies were installed properly with `./install.py`.
+
+#### 3. AI Client Cannot Connect to Server
+- **Check MCP configuration JSON**: Ensure JSON syntax is valid (no trailing commas).
+- **Check working directory**: Verify that your MCP client configuration specifies the correct repository directory, or use the direct `tsx` script path.
+
+#### 4. macOS Permissions Prompt for Desktop Tools
+- When using `mac_see`, `mac_click`, or `mac_ax`, macOS will prompt for **Accessibility** and **Screen Recording** permissions in **System Settings > Privacy & Security**. Grant permissions to your terminal, Python, or AI host app. Run `./install.py` to re-audit permissions anytime.
+
+---
+
+### Security & Safe Operation
+
+> [!WARNING]
+> **Security Notice**: OpenHarness runs locally and provides access to powerful computer capabilities (shell commands, file modification, browser control, native macOS automation).
+>
+> - **Trusted AI Clients Only**: Only connect AI clients and models that you trust. Treat the MCP connection as an administrative local automation interface.
+> - **Supervise Sensitive Operations**: While developer tools operate within normal macOS user permissions, review destructive shell commands or file operations before approving them.
+> - **Localhost vs. LAN Binding**:
+>   - By default, the API server binds to `0.0.0.0:8080`, allowing trusted devices on your private local network (LAN) to access OpenHarness.
+>   - To restrict access strictly to the local machine, set:
+>     ```bash
+>     export OPENHARNESS_HOST=127.0.0.1
+>     ```
+> - **Never Expose to the Public Internet**: Do not forward port 8080 on your router, bind to a public IP, or expose OpenHarness through unauthenticated tunnels (e.g. ngrok, Cloudflare Tunnel).
 
 ---
 
