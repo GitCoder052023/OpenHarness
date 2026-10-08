@@ -77,49 +77,11 @@ This is an illustrative workflow, not a recorded test run. The agent decides wha
 
 ## Why OpenHarness
 
-A model can explain a failing test. Getting it to run that test on your Mac, read the file, and inspect the app is a different problem.
+[OpenAgent](https://github.com/GitCoder052023/OpenAgent) began as our Jarvis: a hands-free Mac assistant with Instinct as its brain, connected through WhatsApp.
 
-OpenAgent already had the tools for that. But using them with another model meant bringing along its WhatsApp transport, microphone loop, wake-word detection, and speech models too.
+But you might not have Instinct access. Or you might want the tools without the voice and WhatsApp setup. That's why OpenHarness exists: the full OpenAgent harness, on its own, ready for your model.
 
-OpenHarness separates the execution engine from the assistant. Keep the 55+ tools and five engines; leave the voice and messaging setup behind. Use an MCP client, call the HTTP API from your own app, or connect a local model through your agent framework. There is no built-in LLM loop and no required model provider.
-
-### The Core Problem: Reasoning vs. Execution
-
-Modern AI models are exceptionally good at reasoning, planning, and coding, but they lack a standardized bridge to actually interact with your computer:
-
-```text
-Without OpenHarness                      With OpenHarness
-┌──────────────────┐                     ┌──────────────────┐
-│     AI Agent     │                     │     AI Agent     │
-└────────┬─────────┘                     └────────┬─────────┘
-         │                                        │
-         │ Can reason                             │ MCP (stdio)
-         ▼                                        ▼
-┌──────────────────┐                     ┌──────────────────┐
-│ Limited ability  │                     │   OpenHarness    │
-│ to touch machine │                     └────────┬─────────┘
-└──────────────────┘                              │ Standardized
-                                                  ▼ local execution
-                                         ┌──────────────────┐
-                                         │ 55+ macOS, Web,  │
-                                         │ Shell & UI Tools │
-                                         └──────────────────┘
-```
-
-OpenHarness does not decide what to do next. Your agent owns the plan, permissions, and conversation; OpenHarness supplies the tools.
-
-### Skill, MCP, API, and Worker
-
-OpenHarness provides distinct interfaces depending on what is connecting to it:
-
-| Layer | Role | Who Connects To It |
-|---|---|---|
-| **Agent Skill** | Teaches the AI agent *how and when* to choose OpenHarness capabilities | Agent prompts, LLMs, `.agents/skills` |
-| **MCP Connector** | Standardized protocol bridge (`stdio`) exposing tools to MCP clients | Claude Desktop, Cursor, Zed, Goose |
-| **HTTP API Server** | Canonical execution boundary (`REST/JSON`) on `http://127.0.0.1:8080` | MCP connector, scripts, remote backends |
-| **Worker Process** | Persistent Python runtime keeping adapters and tool libraries warm in memory | API Server (stdio JSON IPC) |
-
-The **Agent Skill** provides the knowledge (teaching your agent what tools exist and what parameters they expect), while the **MCP Connector** provides the runtime bridge (allowing your agent to execute those tools directly on the machine).
+Connect Claude Code, Gemini, Codex, or a local Ollama model through MCP or the HTTP API. The agent skill teaches your agent how to use the tools. Same Mac capabilities, your choice of brain. All open source.
 
 ---
 
