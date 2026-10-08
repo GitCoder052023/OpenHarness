@@ -17,7 +17,7 @@ Expose 55+ developer, native desktop, browser, web scraping, and social automati
 [![License: MIT](https://img.shields.io/badge/license-MIT-purple.svg?style=flat-square)](LICENSE)
 [![By OpenAgent](https://img.shields.io/badge/by-OpenAgent-orange.svg?style=flat-square)](https://github.com/GitCoder052023/OpenAgent)
 
-[Quick Start](#quick-start) · [Why OpenHarness](#why-openharness) · [Architecture](#how-it-works) · [Engines & Tools](#core-engines--tools) · [API Reference](#lightweight-nodejs-api-server) · [Roadmap](#future-roadmap) · [Docs](docs/API.md)
+[Why OpenHarness](#why-openharness) · [Architecture](#how-it-works) · [Engines & Tools](#core-engines--tools) · [HTTP API Server](#http-api-server) · [Documentation](#documentation)
 
 </div>
 
@@ -40,9 +40,8 @@ Previously, anyone who wanted to give those powerful capabilities to other model
 **OpenHarness solves this completely:**
 - **Zero WhatsApp or Audio Bloat:** The codebase is cleaned and dedicated purely to harness execution.
 - **Model-Agnostic:** Any LLM, UI, agent framework, or backend can connect immediately.
-- **Lightweight Node.js REST API:** Exposes the entire harness over standard HTTP endpoints (`GET /tools`, `POST /execute`, `POST /tools/:name`).
-- **Zero Schema Translation:** Generates ready-to-use function calling schemas for OpenAI (`?format=openai`), Claude (`?format=anthropic`), and MCP (`?format=mcp`).
-- **Sub-Millisecond IPC Dispatch:** Uses a persistent stdio JSON-RPC worker keeping adapters warm in memory.
+- **Lightweight Node.js + TypeScript API:** Exposes execution capabilities over standard HTTP (`GET /health`, `POST /api/execute`).
+- **Sub-Millisecond IPC Dispatch:** Uses a persistent stdio JSON worker keeping adapters warm in memory.
 
 ---
 
@@ -92,9 +91,96 @@ OpenHarness gives your AI agent direct access to **55+ tools** across 5 speciali
 | :--- | :--- | :--- |
 | **Developer Harness** | Sandboxed `bash`, paginated `read`, atomic `write`, exact-match `edit` with unified diffs, `ripgrep` search, `glob`, native `applescript`, system info | `bash`, `read`, `write`, `edit`, `grep`, `glob`, `applescript`, `system_info` |
 | **Native macOS Computer-Use** | Window screenshot inspection, Accessibility tree queries, PID-targeted clicks, keystrokes, drag-and-drop, directional scrolls that don't steal focus | `mac_see`, `mac_click`, `mac_type`, `mac_key`, `mac_drag`, `mac_scroll`, `mac_apps`, `mac_windows`, `mac_ax`, `mac_python` |
-| **Real Browser Control** | Authenticated Chrome control via CDP: background tabs, compositor clicks through iframes and shadow DOM, framework-safe form filling, 97 domain automation skills | `browser_open`, `browser_info`, `browser_click`, `browser_fill`, `browser_type`, `browser_key`, `browser_scroll`, `browser_tabs`, `browser_see`, `browser_eval`, `domain_skills` |
+| **Real Browser Control** | Authenticated Chrome control via CDP: background tabs, compositor clicks through iframes and shadow DOM, framework-safe form filling | `browser_open`, `browser_info`, `browser_click`, `browser_fill`, `browser_type`, `browser_key`, `browser_scroll`, `browser_tabs`, `browser_see`, `browser_eval` |
 | **Web Ingestion & Scraping** | Scrape dynamic web pages directly into clean LLM Markdown, full web search, recursive domain crawling, sitemaps, JSON schema extraction | `firecrawl_scrape`, `firecrawl_search`, `firecrawl_crawl`, `firecrawl_status`, `firecrawl_map`, `firecrawl_extract`, `firecrawl_doctor` |
 | **Social Media Automation** | Persistent Chrome sessions on Threads, Reddit, X, LinkedIn, Instagram, YouTube, TikTok: publishing, anti-deduplication checks, replies, screenshot verification | `social_targets`, `social_setup`, `social_post`, `social_reply`, `social_like`, `social_search`, `social_screenshot`, `social_dedup_check`, `social_agent_task` |
+
+---
+
+## HTTP API Server
+
+OpenHarness includes a lightweight Node.js + TypeScript + Express HTTP API server located under `./src/server`. It acts strictly as an execution transport layer over a persistent Python worker.
+
+> [!WARNING]
+> **Security Notice**: This API exposes local execution capabilities (shell commands, file operations, system automation). By default, the server binds to `0.0.0.0` for local area network access. **Never expose this service to the public internet**; only run it on trusted local networks.
+
+### Starting the Server
+
+```bash
+# Start server
+pnpm run server
+# or
+pnpm start
+```
+
+### Configuration
+
+The server binds to `0.0.0.0:8080` by default. Configure via environment variables:
+
+- `OPENHARNESS_HOST`: Host interface to bind (default: `0.0.0.0`)
+- `OPENHARNESS_PORT`: Port to listen on (default: `8080`)
+- `OPENHARNESS_TIMEOUT_MS`: Request timeout in milliseconds (default: `120000`)
+
+### Endpoints
+
+#### 1. Health Check
+
+```http
+GET /health
+```
+
+**Response (`200 OK`):**
+
+```json
+{
+  "status": "ok",
+  "worker": "ready"
+}
+```
+
+#### 2. Tool Execution
+
+```http
+POST /api/execute
+Content-Type: application/json
+```
+
+**Request Example:**
+
+```json
+{
+  "tool": "bash",
+  "args": {
+    "command": "uname -a"
+  }
+}
+```
+
+**Response Example (Success):**
+
+```json
+{
+  "status": "ok",
+  "tool": "bash",
+  "result": {
+    "exit_code": 0,
+    "output": "Darwin Kernel Version ...\n",
+    "timed_out": false,
+    "truncated": false,
+    "cwd": "/Users/hamdan/OpenHarness"
+  }
+}
+```
+
+**Response Example (Execution Error):**
+
+```json
+{
+  "status": "error",
+  "tool": "bash",
+  "error": "Command failed with exit code 1"
+}
+```
 
 ---
 

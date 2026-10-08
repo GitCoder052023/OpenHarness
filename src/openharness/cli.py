@@ -31,8 +31,8 @@ def main():
 
     # serve
     serve_parser = subparsers.add_parser("serve", help="Start the Node.js REST API server")
-    serve_parser.add_argument("--port", "-p", type=int, default=8080, help="Port to listen on (default: 8080)")
-    serve_parser.add_argument("--host", default="127.0.0.1", help="Host to bind to (default: 127.0.0.1)")
+    serve_parser.add_argument("--port", "-p", type=int, default=int(os.environ.get("OPENHARNESS_PORT", 8080)), help="Port to listen on (default: 8080)")
+    serve_parser.add_argument("--host", default=os.environ.get("OPENHARNESS_HOST", "0.0.0.0"), help="Host to bind to (default: 0.0.0.0)")
 
     # worker
     subparsers.add_parser("worker", help="Run the persistent JSON-RPC stdio worker")
@@ -68,22 +68,19 @@ def main():
         print("==============================================================================")
 
     elif args.command == "list":
-        # Run node server/tools-manifest or print catalog
-        repo_root = Path(__file__).resolve().parents[2]
-        manifest_path = repo_root / "server" / "tools-manifest.js"
-        if manifest_path.exists():
-            subprocess.run(["node", "-e", "import('./server/tools-manifest.js').then(m => console.log(JSON.stringify(m.TOOLS_MANIFEST.map(t => ({name: t.name, engine: t.engine, description: t.description})), null, 2)))"], cwd=str(repo_root))
-        else:
-            print("Tool catalog available at GET /tools on the API server.")
+        print("To execute a tool via CLI, run: openharness execute '{\"tool\": \"bash\", \"args\": {\"command\": \"ls\"}}'")
 
     elif args.command == "serve":
+        import shutil
         repo_root = Path(__file__).resolve().parents[2]
-        server_path = repo_root / "server" / "index.js"
+        server_path = repo_root / "src" / "server" / "index.ts"
         env = os.environ.copy()
         env["OPENHARNESS_PORT"] = str(args.port)
         env["OPENHARNESS_HOST"] = str(args.host)
         print(f"Starting OpenHarness API server on http://{args.host}:{args.port}...")
-        subprocess.run(["node", str(server_path)], cwd=str(repo_root), env=env)
+        pnpm_bin = shutil.which("pnpm")
+        cmd = ["pnpm", "run", "server"] if pnpm_bin else ["npx", "tsx", str(server_path)]
+        subprocess.run(cmd, cwd=str(repo_root), env=env)
 
     elif args.command == "worker":
         from openharness.worker import main as worker_main

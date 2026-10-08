@@ -707,11 +707,6 @@ def execute_tool_call(
                 return {"status": "error", "tool": tool, "error": res.get("error", "Browser script failed"), "result": res}
             return {"status": "ok", "tool": tool, "result": res}
 
-        elif tool in ("browser_skills", "domain_skills"):
-            if browser_adapter is None:
-                raise RuntimeError("Browser Harness adapter is not available on this system")
-            res = browser_adapter.domain_skills(host=args.get("host") or args.get("url"))
-            return {"status": "ok", "tool": tool, "result": res}
 
         elif tool in ("mac_browser", "browser"):
             action = args.get("action", "page_info")
@@ -828,20 +823,6 @@ def execute_tool_call(
                 raise RuntimeError("No harness available for system_info")
             return {"status": "ok", "tool": tool, "result": res}
 
-        elif tool == "instructions":
-            if harness is None:
-                raise RuntimeError("Headless Bun harness is not initialized")
-            res = harness.instructions(directory=args.get("directory"))
-            return {"status": "ok", "tool": tool, "result": res}
-
-        elif tool == "system_prompt":
-            if harness is None:
-                raise RuntimeError("Headless Bun harness is not initialized")
-            res = harness.system_prompt(
-                model=args.get("model", "default"),
-                agent=args.get("agent"),
-            )
-            return {"status": "ok", "tool": tool, "result": res}
 
         # --- Firecrawl Web Ingestion & Extraction Primitives ---
         elif tool in ("firecrawl_scrape", "scrape", "scrape_url"):
@@ -1320,10 +1301,6 @@ def format_tool_response(response: Dict[str, Any], max_length: int = MAX_RESPONS
     elif tool in ("browser_wait",):
         body = f"Wait completed for {result.get('waited_for', 'load')}"
 
-    elif tool in ("browser_skills", "domain_skills"):
-        skills = result if isinstance(result, list) else []
-        body = f"Domain Skills ({len(skills)}):\n" + "\n".join(f"• {s.get('skill')}: {s.get('file')}" for s in skills)
-
     elif tool in ("firecrawl_scrape", "scrape", "scrape_url"):
         data = result.get("data", result) if isinstance(result, dict) else {}
         meta = data.get("metadata", {}) if isinstance(data, dict) else {}
@@ -1448,7 +1425,7 @@ def format_tool_response(response: Dict[str, Any], max_length: int = MAX_RESPONS
     elif tool in ("social_exec", "social_ab"):
         body = f"Agent-Browser Exec [{result.get('platform')}@CDP {result.get('cdp_port')}]:\n{result.get('output', '')}"
 
-    elif tool in ("system_info", "instructions", "system_prompt", "mac_ax", "ax", "mac_browser", "browser", "mac_doctor", "doctor"):
+    elif tool in ("system_info", "mac_ax", "ax", "mac_browser", "browser", "mac_doctor", "doctor"):
         body = json.dumps(result, indent=2)
 
     else:

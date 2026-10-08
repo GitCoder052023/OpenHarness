@@ -157,7 +157,9 @@ def setup_config_file():
 def run_smoke_tests():
     log_info("Running post-install verification smoke test...")
     try:
-        res = subprocess.run(["node", "server/test.js"], cwd=str(ROOT_DIR), capture_output=True, text=True)
+        pnpm_bin = shutil.which("pnpm")
+        cmd = ["pnpm", "test"] if pnpm_bin else ["npm", "test"]
+        res = subprocess.run(cmd, cwd=str(ROOT_DIR), capture_output=True, text=True)
         if res.returncode == 0:
             log_ok("OpenHarness API server test passed successfully!")
         else:
@@ -196,7 +198,7 @@ def main():
   ✓ OPENHARNESS INSTALLATION COMPLETE!
 =============================================================================={Style.RESET}
 To launch the OpenHarness REST API server:
-  {Style.CYAN}npm start{Style.RESET}  (or: {Style.CYAN}node server/index.js{Style.RESET})
+  {Style.CYAN}pnpm start{Style.RESET}  (or: {Style.CYAN}npm start{Style.RESET})
 
 To test tool execution from the CLI:
   {Style.CYAN}uv run openharness execute '{{"tool": "bash", "args": {{"command": "uname -a"}}}}'{Style.RESET}

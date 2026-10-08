@@ -3,15 +3,16 @@
   "version": "1.0.0",
   "description": "OpenHarness by OpenAgent — The open execution harness for autonomous agents on macOS",
   "type": "module",
-  "main": "server/index.js",
+  "main": "src/server/index.ts",
   "bin": {
-    "openharness-server": "server/index.js"
+    "openharness-server": "src/server/index.ts"
   },
   "scripts": {
-    "start": "node server/index.js",
-    "dev": "node --watch server/index.js",
-    "server": "node server/index.js",
-    "test": "node server/test.js",
+    "start": "tsx src/server/index.ts",
+    "dev": "tsx watch src/server/index.ts",
+    "server": "tsx src/server/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/server/__tests__/*.test.ts",
     "prepare": "husky"
   },
   "keywords": [
@@ -22,15 +23,21 @@
     "claude",
     "gemini",
     "codex",
-    "mcp",
     "macos",
     "automation"
   ],
   "author": "OpenAgent Team",
   "license": "MIT",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
-    "husky": "^9.1.7"
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.4",
+    "husky": "^9.1.7",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
   }
 }

@@ -82,26 +82,30 @@ def run_doctor():
     print("\n==============================================================================")
 
 
-def start_server(port: int = 8080, host: str = "127.0.0.1"):
+def start_server(port: int = 8080, host: str = "0.0.0.0"):
     log_banner()
-    server_path = ROOT_DIR / "server" / "index.js"
+    server_path = ROOT_DIR / "src" / "server" / "index.ts"
     env = os.environ.copy()
     env["OPENHARNESS_PORT"] = str(port)
     env["OPENHARNESS_HOST"] = host
 
     print(f"Starting OpenHarness API server on http://{host}:{port}...\n")
     try:
-        subprocess.run(["node", str(server_path)], cwd=str(ROOT_DIR), env=env)
+        pnpm_bin = shutil.which("pnpm")
+        cmd = ["pnpm", "run", "server"] if pnpm_bin else ["npx", "tsx", str(server_path)]
+        subprocess.run(cmd, cwd=str(ROOT_DIR), env=env)
     except KeyboardInterrupt:
         print("\nOpenHarness server stopped.")
 
 
 def main():
     setup_path()
+    default_host = os.environ.get("OPENHARNESS_HOST", "0.0.0.0")
+    default_port = int(os.environ.get("OPENHARNESS_PORT", 8080))
     parser = argparse.ArgumentParser(description="OpenHarness Autonomous Boot Engine")
     parser.add_argument("--doctor", action="store_true", help="Run preflight diagnostics and exit")
-    parser.add_argument("--port", "-p", type=int, default=8080, help="Server port (default: 8080)")
-    parser.add_argument("--host", default="127.0.0.1", help="Server host (default: 127.0.0.1)")
+    parser.add_argument("--port", "-p", type=int, default=default_port, help="Server port (default: 8080)")
+    parser.add_argument("--host", default=default_host, help="Server host (default: 0.0.0.0)")
     args = parser.parse_args()
 
     if args.doctor:

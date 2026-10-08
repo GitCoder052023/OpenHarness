@@ -111,9 +111,11 @@ print('BROWSER_ADAPTER_PASSED')
 
 
 def run_api_server_test() -> Tuple[bool, str, float]:
-    """Verifies Node.js API server endpoints and execution."""
+    """Verifies Node.js + TypeScript API server endpoints and execution."""
     t0 = time.time()
-    res = subprocess.run(["node", "server/test.js"], cwd=str(ROOT_DIR), capture_output=True, text=True)
+    pnpm_bin = shutil.which("pnpm")
+    cmd = ["pnpm", "test"] if pnpm_bin else ["npx", "tsx", "--test", "src/server/__tests__/*.test.ts"]
+    res = subprocess.run(cmd, cwd=str(ROOT_DIR), capture_output=True, text=True)
     duration = time.time() - t0
     passed = res.returncode == 0
     output = (res.stdout + "\n" + res.stderr).strip()
