@@ -1,0 +1,20 @@
+{
+  "name": "cli-harness",
+  "description": "Headless Mac Execution Harness & Preserved Agent Prompts for OpenAgent",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "harness": "bun run harness-bridge.ts"
+  },
+  "dependencies": {
+    "diff": "8.0.2",
+    "effect": "4.0.0-beta.83"
+  },
+  "devDependencies": {
+    "@types/node": "24.12.2",
+    "typescript": "5.8.2"
+  },
+  "license": "MIT"
+}
