@@ -2,7 +2,6 @@
 """
 ==============================================================================
 ⚡ OPENHARNESS - COMPREHENSIVE TEST RUNNER
-   By OpenAgent
 ==============================================================================
 Runs and orchestrates all test suites, live harness checks, and API tests:
 1. Unit test suite via pytest (tests/ - harness, adapters, dispatchers).
@@ -131,7 +130,7 @@ def main():
 
     print(f"""{Style.BOLD}{Style.CYAN}
 ==============================================================================
-          ⌘ OPENHARNESS - COMPREHENSIVE TEST SUITE (by OpenAgent)
+          ⌘ OPENHARNESS - COMPREHENSIVE TEST SUITE ()
 =============================================================================={Style.RESET}""")
 
     tests = []

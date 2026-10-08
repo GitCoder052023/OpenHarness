@@ -1,5 +1,5 @@
 /**
- * OpenHarness Runner (by OpenAgent)
+ * OpenHarness Runner
  * Headless, direct execution channel to OpenCode's proven core tools.
  * Receives JSON-RPC requests on stdin, runs the tool, and responds on stdout.
  */

@@ -58,7 +58,7 @@ flowchart LR
         UI["Custom Agent UI / CLI"]
     end
 
-    subgraph OpenHarness["OpenHarness (by OpenAgent)"]
+    subgraph OpenHarness["OpenHarness"]
         API["Node.js API Server<br/>(http://localhost:8080)"]
         IPC["Fast Stdio JSON-RPC Bridge"]
         DISP["Universal Tool Dispatcher"]

@@ -2,7 +2,6 @@
 """
 ==============================================================================
 ⚡ OPENHARNESS - ONE-COMMAND AUTONOMOUS INSTALLER
-   By OpenAgent
 ==============================================================================
 A complete, zero-touch setup and installation engine for OpenHarness:
 1. Installs/verifies macOS system dependencies (Homebrew, uv, Bun, Ripgrep).
@@ -42,7 +41,7 @@ class Style:
 def log_banner():
     print(f"""{Style.BOLD}{Style.CYAN}
 ==============================================================================
-        ⌘ OPENHARNESS - SYSTEM INSTALLER & SETUP (by OpenAgent)
+        ⌘ OPENHARNESS - SYSTEM INSTALLER & SETUP ()
 =============================================================================={Style.RESET}""")
 
 

@@ -2,7 +2,6 @@
 """
 ==============================================================================
 ⚡ OPENHARNESS - AUTONOMOUS BOOT ENGINE & SUPERVISOR
-   By OpenAgent
 ==============================================================================
 An intelligent boot orchestrator for OpenHarness:
 1. Self-Bootstraps virtual environment via uv.
@@ -39,7 +38,7 @@ class Style:
 def log_banner():
     print(f"""{Style.BOLD}{Style.CYAN}
 ==============================================================================
-          ⌘ OPENHARNESS - SYSTEM BOOT ENGINE (by OpenAgent)
+          ⌘ OPENHARNESS - SYSTEM BOOT ENGINE ()
 =============================================================================={Style.RESET}""")
 
 
