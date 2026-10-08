@@ -1,19 +1,19 @@
-# Security Policy
+# Security Policy — OpenHarness (by OpenAgent)
 
-OpenAgent connects a conversational AI assistant (**Instinct**) to a local macOS execution environment. Because OpenAgent enables shell execution, filesystem modification, application control, browser automation, and GUI interaction, security and fail-closed behavior are core design requirements.
+OpenHarness connects external AI models, agents, and client systems (such as Claude, Gemini, OpenAI / Codex, DeepSeek, or local LLMs) to a local macOS execution environment. Because OpenHarness enables shell execution, filesystem modification, application control, browser automation via CDP, and GUI interaction, security and fail-closed behavior are core architectural requirements.
 
 > [!WARNING]
 > ## AI Computer-Use Security & Liability
 >
 > **Giving an AI agent access to your computer inherently introduces security and privacy risks.**
 >
-> OpenAgent can perform actions with the privileges of the local user account, including executing commands, modifying files, interacting with applications, controlling browser sessions, and operating the GUI.
+> OpenHarness can perform actions with the privileges of the local user account, including executing commands, modifying files, interacting with applications, controlling browser sessions, and operating the GUI.
 >
 > AI agents can make mistakes. Bugs, unexpected model behavior, prompt injection, malicious instructions, or misconfiguration may result in unintended actions, data loss, privacy incidents, or other damage.
 >
-> **OpenAgent is provided "AS IS" and "AS AVAILABLE".** To the maximum extent permitted by applicable law, the maintainers and contributors are **not liable for losses, damages, data loss, privacy incidents, or other consequences resulting from the use or misuse of OpenAgent.**
+> **OpenHarness is provided "AS IS" and "AS AVAILABLE".** To the maximum extent permitted by applicable law, the maintainers and contributors are **not liable for losses, damages, data loss, privacy incidents, or other consequences resulting from the use or misuse of OpenHarness.**
 >
-> You are responsible for deciding whether to run OpenAgent, what permissions to grant it, and what data or accounts are accessible to it.
+> You are responsible for deciding whether to run OpenHarness, what permissions to grant it, and what data or accounts are accessible to it.
 >
 > **Never run an autonomous computer-use agent in an environment where an unintended action could cause unacceptable damage or loss.**
 
@@ -21,7 +21,7 @@ OpenAgent connects a conversational AI assistant (**Instinct**) to a local macOS
 
 ## Supported Versions
 
-OpenAgent is currently in active beta. Security fixes are provided for the latest version on the `main` branch.
+OpenHarness is currently in active development. Security fixes are provided for the latest version on the `main` branch.
 
 | Version | Supported |
 | :--- | :--- |
@@ -37,7 +37,7 @@ OpenAgent is currently in active beta. Security fixes are provided for the lates
 Instead:
 
 - Open a private GitHub Security Advisory via **Security → Advisories → Report a vulnerability**.
-- Or contact the maintainers directly.
+- Or contact the maintainers directly through the [OpenAgent organization](https://github.com/GitCoder052023/OpenAgent).
 
 Please include:
 
@@ -51,79 +51,58 @@ We will acknowledge reports and work with the reporter to investigate and addres
 
 ## Security Model
 
-OpenAgent includes several architectural safeguards designed to reduce unintended execution.
+OpenHarness includes several architectural safeguards designed to reduce unintended execution:
 
-### 1. Strict Chat Destination Lock
+### 1. Localhost Loopback Binding by Default
 
-When `BRIDGE_SAFE_MODE=true`:
+The OpenHarness Node.js API server binds strictly to `127.0.0.1` by default. It is not exposed to the local network or internet unless explicitly configured via `OPENHARNESS_HOST=0.0.0.0`.
 
-- OpenAgent verifies the active WhatsApp Desktop chat against `BRIDGE_WHATSAPP_NUMBER`.
-- Messages are only processed from the authorized destination.
-- Switching to another conversation causes the bridge to **fail closed**.
+### 2. Optional API Key Authentication
 
-### 2. Configurable Target Isolation
+When exposing OpenHarness across local network boundaries, set the `OPENHARNESS_API_KEY` environment variable. All requests to `/execute`, `/tools`, and adapter endpoints will require:
+
+```http
+Authorization: Bearer <your-secret-api-key>
+```
+
+Requests without a matching key are immediately rejected with `401 Unauthorized`.
+
+### 3. Configurable Target Isolation
 
 The native macOS harness maintains a configurable `PROHIBITED_TARGETS` list.
 
-By default, WhatsApp Desktop and other macOS applications can be operated directly by the agent using native computer-use tools (`mac_click`, `mac_type`, `mac_see`, `mac_ax`, etc.). If specific applications need to be restricted to prevent accidental interaction with sensitive processes, their bundle identifiers or names can be added to `PROHIBITED_TARGETS`.
+If specific applications need to be restricted to prevent accidental interaction with sensitive processes (such as password managers or terminal windows running critical jobs), their bundle identifiers or process names can be added to `PROHIBITED_TARGETS`.
 
-### 3. PID-Targeted Input
+### 4. PID-Targeted Input
 
-Mouse and keyboard events are posted directly to the target application's process where supported.
+Mouse and keyboard events in the macOS adapter are posted directly to the target application's process where supported.
 
-This allows background interaction without unnecessarily moving the user's physical cursor or stealing focus from the active application.
+This allows background interaction without unnecessarily moving the user's physical cursor or stealing focus from the active window.
 
-### 4. Idempotency & Execution Ledger
+### 5. Deterministic CDP Profiles
 
-Inbound message signatures and tool-call IDs are recorded in:
+Browser automation (Chrome CDP) runs in dedicated, isolated user data directories (`~/Library/Application Support/locoagent-chrome-profile-<platform>`). This keeps agent-driven web actions completely isolated from your daily personal browser sessions and passwords.
 
-```text
-~/Library/Logs/OpenAgent/processed.jsonl
-```
+### 6. Fail-Closed Error Handling
 
-Previously processed messages and tool calls are not re-executed across restarts, reducing accidental duplicate execution and replay risk.
-
-### 5. Audio Silence Gating
-
-Voice input is evaluated using an RMS energy threshold before being transmitted to the transcription pipeline.
-
-Low-energy and accidental recordings are discarded before processing.
-
-### 6. Agent-Level Operating Rules
-
-The connected agent is also instructed to:
-
-- Investigate before acting.
-- Minimize access to unrelated data.
-- Prefer reversible operations.
-- Treat external content as untrusted instructions.
-- Never bypass safety mechanisms.
-- Avoid unnecessary privilege escalation.
-- Verify consequential actions before execution.
-- Require confirmation for destructive or materially consequential actions where appropriate.
-- Treat credentials, authenticated browser sessions, and private data as sensitive.
-
-These rules complement, but do not replace, the runtime's technical safeguards.
+If a tool call is malformed, targets an ambiguous element, or encounters an unexpected state, OpenHarness fails closed and returns a structured error rather than guessing or attempting arbitrary actions.
 
 ---
 
 ## User Responsibilities
 
-When operating OpenAgent:
+When operating OpenHarness:
 
-1. **Verify the bridge destination.** Do not configure `BRIDGE_WHATSAPP_NUMBER` to an untrusted or shared contact.
-2. **Grant permissions carefully.** Accessibility, Input Monitoring, Screen Recording, and Microphone permissions provide significant local capabilities.
-3. **Protect accessibility snapshots.** `OpenAgent inspect` may expose private WhatsApp content. Never commit or publish `ax-tree.json`.
-4. **Do not run as root.** Shell commands execute with the privileges of the current macOS user. Avoid `sudo`.
-5. **Protect logs.** Logs under `~/Library/Logs/OpenAgent/` may contain execution paths, tool names, and other operational information. Review them before sharing.
-6. **Protect sensitive environments.** Do not expose credentials, financial accounts, production infrastructure, or irreplaceable data unless you understand and accept the associated risks.
+1. **Protect API endpoints.** Do not bind OpenHarness to public network interfaces without strict API key authentication and network firewalls.
+2. **Grant permissions carefully.** macOS Accessibility, Input Monitoring, and Screen Recording permissions provide significant local capabilities. Only grant them to processes you trust.
+3. **Do not run as root.** OpenHarness commands execute with the privileges of the current macOS user. Never run OpenHarness with `sudo`.
+4. **Protect logs.** Operational logs may contain command outputs, file paths, and environment details. Review them before sharing externally.
+5. **Protect sensitive environments.** Do not expose credentials, financial accounts, production infrastructure, or irreplaceable data unless you understand and accept the associated risks.
 
 ---
 
 ## Security Philosophy
 
-OpenAgent follows a simple principle:
+OpenHarness follows a simple principle:
 
 > **When execution is ambiguous or unsafe, fail closed rather than guess.**
-
-Technical safeguards reduce risk, but they cannot eliminate the fundamental risks of giving an AI agent access to a real computer.

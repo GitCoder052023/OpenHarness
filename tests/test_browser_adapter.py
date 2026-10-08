@@ -1,15 +1,15 @@
-"""Unit and integration tests for BrowserAdapter and Browser Tools in OpenAgent."""
+"""Unit and integration tests for BrowserAdapter and Browser Tools in OpenHarness."""
 
 import pytest
 from unittest.mock import MagicMock, patch
 
-from OpenAgent.browser_adapter import (
+from openharness.browser_adapter import (
     BrowserAdapter,
     BrowserError,
     _check_url_allowed,
     PROHIBITED_BROWSER_DOMAINS,
 )
-from OpenAgent.dispatcher import (
+from openharness.dispatcher import (
     parse_tool_call,
     execute_tool_call,
     format_tool_response,
@@ -105,10 +105,10 @@ def test_browser_adapter_fill_and_type_and_key():
     adapter = BrowserAdapter(helpers=mock_helpers)
 
     # Fill
-    res_fill = adapter.fill("input.search", "OpenAgent", clear_first=True, timeout=3.0)
-    mock_helpers.fill_input.assert_called_once_with("input.search", "OpenAgent", clear_first=True, timeout=3.0)
+    res_fill = adapter.fill("input.search", "OpenHarness", clear_first=True, timeout=3.0)
+    mock_helpers.fill_input.assert_called_once_with("input.search", "OpenHarness", clear_first=True, timeout=3.0)
     assert res_fill["status"] == "ok"
-    assert res_fill["length"] == 9
+    assert res_fill["length"] == 11
 
     # Type
     res_type = adapter.type("Direct text")
@@ -317,14 +317,14 @@ def test_format_browser_responses():
         "result": {
             "action": "list",
             "tabs": [
-                {"title": "OpenAgent", "url": "https://github.com", "selected": True},
+                {"title": "OpenHarness", "url": "https://github.com", "selected": True},
                 {"title": "Google", "url": "https://google.com", "selected": False},
             ],
         },
     }
     fmt_tabs = format_tool_response(r_tabs)
     assert "Open Chrome Tabs (2):" in fmt_tabs
-    assert "🐎 OpenAgent" in fmt_tabs
+    assert "🐎 OpenHarness" in fmt_tabs
     assert "• Google" in fmt_tabs
 
 

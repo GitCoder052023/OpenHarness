@@ -1,7 +1,7 @@
-"""Browser Harness Adapter for OpenAgent.
+"""Browser Harness Adapter for OpenHarness (by OpenAgent).
 
 Integrates the production-grade Browser Harness CDP engine directly into
-OpenAgent, enabling external intelligence (Instinct / Jarvis) to control
+OpenHarness, enabling external intelligence to control
 the user's real, authenticated Chrome browser session in the background
 without stealing window focus or moving the physical mouse cursor.
 
@@ -10,9 +10,7 @@ Key Capabilities:
 - Framework-safe input filling (React/Vue synthetic events, SelectAll+Backspace)
 - Composited CDP click dispatching (bypasses iframes, shadow DOM)
 - Perception via Accessibility Tree (getFullAXTree + DOM.getBoxModel)
-- Screenshot capture with WhatsApp image attachment delivery (_send_attachment)
 - High-speed compound Python burst execution (chains actions in <200ms locally)
-- Safety guards against touching WhatsApp Web or prohibited domains
 - Domain skills integration from agent-workspace
 """
 
@@ -37,7 +35,7 @@ try:
 except ImportError:
     FirecrawlAdapter = None  # type: ignore[assignment,misc]
 
-logger = logging.getLogger("openagent.browser_adapter")
+logger = logging.getLogger("openharness.browser_adapter")
 
 PROHIBITED_BROWSER_DOMAINS = {
     "web.whatsapp.com",
@@ -65,7 +63,7 @@ def _check_url_allowed(url: Optional[str]) -> None:
 
 
 class BrowserAdapter:
-    """High-level adapter wrapping browser-harness for OpenAgent."""
+    """High-level adapter wrapping browser-harness for OpenHarness."""
 
     def __init__(
         self,
@@ -335,9 +333,9 @@ class BrowserAdapter:
         max_dim: Optional[int] = None,
         send_image: bool = False,
     ) -> Dict[str, Any]:
-        """Capture tab screenshot. Optionally queues file attachment for WhatsApp."""
+        """Capture tab screenshot."""
         if path is None:
-            fd, temp_path = tempfile.mkstemp(suffix=".png", prefix="OpenAgent-browser-")
+            fd, temp_path = tempfile.mkstemp(suffix=".png", prefix="openharness-browser-")
             os.close(fd)
             path = temp_path
 
@@ -498,7 +496,7 @@ class BrowserAdapter:
         stdout_buf = io.StringIO()
         stderr_buf = io.StringIO()
         namespace = {
-            "__name__": "__openagent_browser__",
+            "__name__": "__openharness_browser__",
             "browser": self,
             "helpers": h,
             "cdp": h.cdp,
@@ -530,7 +528,7 @@ class BrowserAdapter:
         t_start = time.monotonic()
         exec_exc = None
         try:
-            compiled = compile(code, "<openagent-browser>", "exec")
+            compiled = compile(code, "<openharness-browser>", "exec")
         except Exception as compile_err:
             return {
                 "status": "error",

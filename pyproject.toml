@@ -34,7 +34,7 @@ testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["openharness*", "OpenAgent*"]
+include = ["openharness*"]
 
 [tool.uv.sources]
 browser-harness = { workspace = true }

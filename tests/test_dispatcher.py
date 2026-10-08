@@ -2,7 +2,7 @@ import re
 
 import pytest
 from unittest.mock import MagicMock
-from OpenAgent.dispatcher import (
+from openharness.dispatcher import (
     encode_tool_call,
     parse_tool_call,
     parse_tool_calls,
@@ -11,7 +11,7 @@ from OpenAgent.dispatcher import (
     format_tool_responses,
     MAX_WHATSAPP_RESPONSE_LEN,
 )
-from OpenAgent.harness import Harness, HarnessError
+from openharness.harness import Harness, HarnessError
 
 
 def test_parse_tool_call_markdown_fenced():
@@ -183,7 +183,7 @@ def test_format_tool_response_bash():
         "result": {"exit_code": 0, "output": "total 0\n", "timed_out": False},
     }
     formatted = format_tool_response(resp)
-    assert "[Jarvis Tool Response: bash | status: ok]" in formatted
+    assert "[OpenHarness Tool Response: bash | status: ok]" in formatted
     assert "(exit 0)" in formatted
     assert "total 0" in formatted
 
@@ -195,7 +195,7 @@ def test_format_tool_response_error():
         "error": "File not found: nonexistent.txt",
     }
     formatted = format_tool_response(resp)
-    assert "[Jarvis Tool Response: read | status: error]" in formatted
+    assert "[OpenHarness Tool Response: read | status: error]" in formatted
     assert "Error: File not found: nonexistent.txt" in formatted
 
 
@@ -217,8 +217,8 @@ def test_format_tool_responses_multiple():
         {"status": "ok", "tool": "read", "result": {"path": "a.txt", "content": "step 2 content", "lines_returned": 1}},
     ]
     formatted = format_tool_responses(responses)
-    assert "[Jarvis Tool Response 1/2: bash" in formatted
-    assert "[Jarvis Tool Response 2/2: read" in formatted
+    assert "[OpenHarness Tool Response 1/2: bash" in formatted
+    assert "[OpenHarness Tool Response 2/2: read" in formatted
 
 
 
@@ -231,6 +231,14 @@ def test_parse_envelope_single_call():
     env = encode_tool_call({"tool": "bash", "args": {"command": "git status"}})
     call = parse_tool_call(env)
     assert call == {"tool": "bash", "args": {"command": "git status"}}
+
+
+def test_parse_openharness_envelope():
+    import base64, json
+    payload = base64.b64encode(json.dumps({"tool": "bash", "args": {"command": "echo openharness"}}).encode()).decode()
+    env = f"OPENHARNESS_CALL:{payload}:END"
+    call = parse_tool_call(env)
+    assert call == {"tool": "bash", "args": {"command": "echo openharness"}}
 
 
 def test_parse_envelope_with_surrounding_text():

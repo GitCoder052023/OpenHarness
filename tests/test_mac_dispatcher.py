@@ -1,8 +1,8 @@
-"""Unit tests for dispatching macOS Harness tools in OpenAgent."""
+"""Unit tests for dispatching macOS Harness tools in OpenHarness."""
 
 import pytest
 from unittest.mock import MagicMock
-from OpenAgent.dispatcher import (
+from openharness.dispatcher import (
     parse_tool_call,
     parse_tool_calls,
     execute_tool_call,

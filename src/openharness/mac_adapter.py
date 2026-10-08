@@ -1,9 +1,9 @@
-"""macOS Harness Adapter for OpenAgent.
+"""macOS Harness Adapter for OpenHarness (by OpenAgent).
 
 Connects the native macOS Harness (screen vision, background PID-targeted input,
-Accessibility inspections, and Browser Harness CDP) directly to OpenAgent.
+Accessibility inspections, and Browser Harness CDP) directly to OpenHarness.
 
-Enables Jarvis to operate macOS apps and Chrome just like a human user without
+Enables agents to operate macOS apps and Chrome just like a human user without
 moving the user's physical mouse cursor or stealing application focus.
 """
 
@@ -32,7 +32,7 @@ try:
 except ImportError:
     FirecrawlAdapter = None  # type: ignore[assignment,misc]
 
-logger = logging.getLogger("openagent.mac_adapter")
+logger = logging.getLogger("openharness.mac_adapter")
 
 # Prohibited target set for GUI input (empty by default; WhatsApp Desktop is permitted).
 PROHIBITED_TARGETS: set[str] = set()
@@ -50,7 +50,7 @@ def _check_target_allowed(app: Optional[str]) -> None:
 
 
 class MacAdapter:
-    """High-level adapter wrapping MacOS and BrowserHarness for OpenAgent."""
+    """High-level adapter wrapping MacOS and BrowserHarness for OpenHarness."""
 
     def __init__(
         self,
@@ -82,8 +82,8 @@ class MacAdapter:
     def run_python(self, code: str, timeout: float = 30.0) -> Dict[str, Any]:
         """Execute a Python script with mac, browser, firecrawl, Path, and subprocess preloaded.
 
-        Allows Jarvis to run multi-step UI bursts (e.g. focus field, type, click, verify)
-        in milliseconds locally, avoiding multiple 2-second WhatsApp roundtrips.
+        Allows agents to run multi-step UI bursts (e.g. focus field, type, click, verify)
+        in milliseconds locally with high performance.
         """
         if not code or not code.strip():
             raise ValueError("No Python code provided for execution")
@@ -91,7 +91,7 @@ class MacAdapter:
         stdout_buf = io.StringIO()
         stderr_buf = io.StringIO()
         namespace = {
-            "__name__": "__openagent_mac__",
+            "__name__": "__openharness_mac__",
             "mac": self.mac,
             "browser": self.browser,
             "firecrawl": self.firecrawl,
@@ -105,7 +105,7 @@ class MacAdapter:
         t_start = time.monotonic()
         exec_exc = None
         try:
-            compiled = compile(code, "<openagent-mac>", "exec")
+            compiled = compile(code, "<openharness-mac>", "exec")
         except Exception as compile_err:
             return {
                 "status": "error",
@@ -199,7 +199,7 @@ class MacAdapter:
         max_width, max_height : int
             Maximum dimensions for the captured image.
         send_image : bool
-            If True, signals OpenAgent to send the screenshot as a WhatsApp attachment.
+            If True, includes the raw screenshot base64 in response.
         include_summary : bool
             If True, includes a compact summary of visible interactive controls.
         """

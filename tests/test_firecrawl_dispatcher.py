@@ -2,13 +2,13 @@ import json
 import pytest
 from unittest.mock import MagicMock
 
-from OpenAgent.dispatcher import (
+from openharness.dispatcher import (
     execute_tool_call,
     format_tool_response,
     parse_tool_calls,
     encode_tool_call,
 )
-from OpenAgent.firecrawl_adapter import FirecrawlAdapter
+from openharness.firecrawl_adapter import FirecrawlAdapter
 
 
 @pytest.fixture
@@ -17,9 +17,9 @@ def mock_firecrawl():
     fc.scrape.return_value = {
         "success": True,
         "data": {
-            "markdown": "# Architecture\nAll about OpenAgent system design.",
+            "markdown": "# Architecture\nAll about OpenHarness system design.",
             "metadata": {
-                "title": "OpenAgent Docs",
+                "title": "OpenHarness Docs",
                 "sourceURL": "https://example.com/docs",
             },
         },
@@ -86,7 +86,7 @@ def test_dispatcher_execute_scrape(mock_firecrawl):
     )
 
     formatted = format_tool_response(res)
-    assert "OpenAgent Docs" in formatted
+    assert "OpenHarness Docs" in formatted
     assert "https://example.com/docs" in formatted
     assert "Architecture" in formatted
 
@@ -94,12 +94,12 @@ def test_dispatcher_execute_scrape(mock_firecrawl):
 def test_dispatcher_execute_search(mock_firecrawl):
     call = {
         "tool": "firecrawl_search",
-        "args": {"query": "OpenAgent architecture", "limit": 3},
+        "args": {"query": "OpenHarness architecture", "limit": 3},
     }
     res = execute_tool_call(None, call, firecrawl_adapter=mock_firecrawl)
     assert res["status"] == "ok"
     mock_firecrawl.search.assert_called_once_with(
-        query="OpenAgent architecture",
+        query="OpenHarness architecture",
         limit=3,
         scrape_options=None,
     )

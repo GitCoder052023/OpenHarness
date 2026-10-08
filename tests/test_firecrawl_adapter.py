@@ -3,7 +3,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from urllib.error import HTTPError, URLError
 
-from OpenAgent.firecrawl_adapter import (
+from openharness.firecrawl_adapter import (
     FirecrawlAdapter,
     FirecrawlError,
     PROHIBITED_FIRECRAWL_DOMAINS,

@@ -1,6 +1,6 @@
 import pytest
 from pathlib import Path
-from OpenAgent.harness import Harness, OpenCodeHarness, HarnessError
+from openharness.harness import Harness, OpenCodeHarness, HarnessError
 
 
 def test_harness_system_info():
@@ -37,13 +37,13 @@ def test_harness_write_and_edit_cycle(tmp_path: Path):
         assert test_file.exists()
 
         # 2. Edit
-        e_res = h.edit(str(test_file), "Beta", "OpenAgent")
+        e_res = h.edit(str(test_file), "Beta", "OpenHarness")
         assert e_res["replacements"] == 1
         assert "diff" in e_res
 
         # 3. Read back
         r_res = h.read(str(test_file))
-        assert "Alpha OpenAgent Gamma" in r_res["content"]
+        assert "Alpha OpenHarness Gamma" in r_res["content"]
 
 
 def test_harness_edit_missing_target_fails(tmp_path: Path):

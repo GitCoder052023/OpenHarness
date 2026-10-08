@@ -1,1 +1,0 @@
-from openharness.config import *

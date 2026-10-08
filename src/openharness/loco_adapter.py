@@ -1,13 +1,13 @@
-"""LocoAgent Social Media Automation Adapter for OpenAgent.
+"""LocoAgent Social Media Automation Adapter for OpenHarness (by OpenAgent).
 
 Integrates the production-grade LocoAgent CDP social media automation engine
-directly into OpenAgent. Enables external intelligence (Jarvis / Instinct) to:
+directly into OpenHarness. Enables external intelligence to:
 - Control persistent, anti-detection Chrome browser sessions across social platforms
   (X/Twitter, LinkedIn, Reddit, Instagram, Facebook, Threads, YouTube, TikTok, GitHub)
 - Execute deterministic automation workflows and background daemons (e.g. daily paper posting, search & reply)
 - Perform atomic social actions (post updates, reply, like, repost, follow, search)
 - Maintain cross-session deduplication via the persistent operation log
-- Capture annotated screenshots of social feeds and verify post publishing over WhatsApp
+- Capture annotated screenshots of social feeds and verify post publishing
 - Run end-to-end autonomous social missions via LocoAgent's agentic loop
 """
 
@@ -27,7 +27,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-logger = logging.getLogger("openagent.loco_adapter")
+logger = logging.getLogger("openharness.loco_adapter")
 
 # Platforms supported out of the box with dedicated CDP ports
 DEFAULT_TARGET_PORTS = {
@@ -69,11 +69,11 @@ class LocoError(Exception):
 
 
 class LocoAdapter:
-    """High-level adapter wrapping LocoAgent for OpenAgent and WhatsApp dispatch."""
+    """High-level adapter wrapping LocoAgent for OpenHarness."""
 
     def __init__(self, root: Optional[Path] = None, timeout: float = 120.0):
         if root is None:
-            # src/OpenAgent -> src/tools/locoagent
+            # src/openharness -> src/tools/locoagent
             here = Path(__file__).resolve().parent
             candidate = here.parent / "tools" / "locoagent"
             if not candidate.exists():
@@ -273,8 +273,8 @@ class LocoAdapter:
         return self.exec_agent_browser(platform, cmd)
 
     def screenshot(self, platform: str, filename: Optional[str] = None, full: bool = False, annotate: bool = False) -> Dict[str, Any]:
-        """Capture a screenshot of the current page and prepare it for WhatsApp delivery."""
-        temp_dir = Path(tempfile.gettempdir()) / "openagent_social"
+        """Capture a screenshot of the current page."""
+        temp_dir = Path(tempfile.gettempdir()) / "openharness_social"
         temp_dir.mkdir(parents=True, exist_ok=True)
         if not filename:
             filename = f"social_{platform}_{int(time.time())}.png"

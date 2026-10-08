@@ -2,13 +2,13 @@ import json
 import pytest
 from unittest.mock import MagicMock
 
-from OpenAgent.dispatcher import (
+from openharness.dispatcher import (
     execute_tool_call,
     format_tool_response,
     parse_tool_calls,
     encode_tool_call,
 )
-from OpenAgent.loco_adapter import LocoAdapter
+from openharness.loco_adapter import LocoAdapter
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ def mock_loco():
     loco.post_content.return_value = {
         "status": "ok",
         "action": "post",
-        "text": "Hello world from OpenAgent!",
+        "text": "Hello world from OpenHarness!",
         "_send_attachment": "/tmp/post_screenshot.png",
     }
     loco.reply_to_post.return_value = {
@@ -101,11 +101,11 @@ def test_dispatch_social_setup(mock_loco):
 def test_dispatch_social_post(mock_loco):
     call = {
         "tool": "social_post",
-        "args": {"platform": "x", "text": "Hello world from OpenAgent!"},
+        "args": {"platform": "x", "text": "Hello world from OpenHarness!"},
     }
     res = execute_tool_call(None, call, loco_adapter=mock_loco)
     assert res["status"] == "ok"
-    assert res["result"]["text"] == "Hello world from OpenAgent!"
+    assert res["result"]["text"] == "Hello world from OpenHarness!"
     assert res["result"]["_send_attachment"] == "/tmp/post_screenshot.png"
     mock_loco.post_content.assert_called_once()
 

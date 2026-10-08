@@ -3,7 +3,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from pathlib import Path
 
-from OpenAgent.loco_adapter import (
+from openharness.loco_adapter import (
     LocoAdapter,
     LocoError,
     DEFAULT_TARGET_PORTS,
@@ -107,7 +107,7 @@ def test_like_post_dedup_skips():
 
 
 def test_platform_home_urls():
-    from OpenAgent.loco_adapter import PLATFORM_HOME_URLS
+    from openharness.loco_adapter import PLATFORM_HOME_URLS
     assert PLATFORM_HOME_URLS["threads"] == "https://www.threads.net"
     assert PLATFORM_HOME_URLS["reddit"] == "https://www.reddit.com"
     assert "threads.com" not in PLATFORM_HOME_URLS["threads"]

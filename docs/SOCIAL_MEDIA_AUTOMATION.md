@@ -1,6 +1,6 @@
-# 🌐 Social Media Automation with LocoAgent & OpenAgent
+# 🌐 Social Media Automation with LocoAgent — OpenHarness (by OpenAgent)
 
-OpenAgent natively integrates the **LocoAgent** engine to give your external intelligence (Jarvis / Instinct on WhatsApp) full autonomous capability to operate and automate your personal social media accounts directly from your Mac.
+OpenHarness natively integrates the **LocoAgent** engine to give external intelligence (Claude, Gemini, OpenAI / Codex, DeepSeek, local LLMs, or any autonomous agent) full autonomous capability to operate and automate personal social media accounts directly from macOS.
 
 > **Primary Focus**: **Threads** (`threads.net`) and **Reddit** (`reddit.com`).  
 > Secondary supported platforms include X/Twitter, LinkedIn, Instagram, Facebook, YouTube, TikTok, and GitHub.
@@ -9,7 +9,7 @@ OpenAgent natively integrates the **LocoAgent** engine to give your external int
 
 ### 🎯 Supported Social Media Platforms & CDP Profiles
 
-Jarvis operates your accounts through **real Google Chrome browser instances via Chrome DevTools Protocol (CDP)** with isolated cookie and session storage. This bypasses anti-bot detection because you are driving genuine, authenticated desktop Chrome windows without touching your everyday browser.
+Agents operate accounts through **real Google Chrome browser instances via Chrome DevTools Protocol (CDP)** with isolated cookie and session storage. This bypasses anti-bot detection because you are driving genuine, authenticated desktop Chrome windows without touching your everyday browser.
 
 | Platform | Domain | Default CDP Port | Profile Directory (macOS) | Verified Account / Status | Priority |
 | :--- | :--- | :---: | :--- | :--- | :---: |
@@ -27,26 +27,26 @@ Jarvis operates your accounts through **real Google Chrome browser instances via
 
 ---
 
-## 💡 How the External Intelligence Operates Social Media with Tool Calls
+## 💡 How Autonomous Agents Operate Social Media via OpenHarness
 
-A common question is: *how can an external AI model on WhatsApp reliably operate personal social media via tool calls alone?*
+A common question is: *how can an external AI model reliably operate personal social media via tool calls alone?*
 
 1. **Persistent Authentication (Zero Friction)**:
    - You log in manually **once** into the dedicated profile.
    - Sessions, cookies, and local storage remain saved on your Mac permanently. The AI never handles or asks for your passwords.
 2. **Deterministic CDP Perception (`agent-browser`)**:
    - The AI doesn't guess pixel coordinates.
-   - When Jarvis calls `social_post` or `social_reply`, OpenAgent takes an accessibility snapshot with `@e` element IDs (e.g. `@e12 [textbox "What's new?"]`, `@e15 [button "Post"]`).
-   - OpenAgent executes atomic CDP actions (`open`, `snapshot`, `fill`, `click`).
+   - When an agent calls `social_post` or `social_reply`, OpenHarness takes an accessibility snapshot with `@e` element IDs (e.g. `@e12 [textbox "What's new?"]`, `@e15 [button "Post"]`).
+   - OpenHarness executes atomic CDP actions (`open`, `snapshot`, `fill`, `click`).
 3. **Anti-Duplication Ledger**:
    - Every like, upvote, reply, and post is hashed and stored in `persona/operation-log.json`.
-   - Before any action executes, OpenAgent checks if the target post URL was already touched. Duplicate spamming is blocked automatically.
-4. **Visual Verification Delivered to WhatsApp**:
-   - Every published thread, post, or reply captures an automatic screenshot from the live Chrome window and returns it directly to WhatsApp as media confirmation.
+   - Before any action executes, OpenHarness checks if the target post URL was already touched. Duplicate spamming is blocked automatically.
+4. **Visual Verification Delivered in Tool Response**:
+   - Every published thread, post, or reply captures an automatic screenshot from the live Chrome window and returns the path directly in the tool response for verification.
 
 ---
 
-## 🚀 One-Time Setup: Logging Into Your Accounts (Option A)
+## 🚀 One-Time Setup: Logging Into Your Accounts
 
 Launch isolated Chrome windows to seed logins:
 
@@ -61,20 +61,20 @@ bun run setup-chrome --target reddit    # Launches Chrome on port 9224 -> Log in
 bun run setup-chrome --all
 ```
 
-Log in manually in the browser windows. Your logins are saved indefinitely in `~/Library/Application Support/locoagent-chrome-profile-<target>`. Once logged in, Chrome can remain running or be auto-launched by OpenAgent whenever Jarvis needs it.
+Log in manually in the browser windows. Your logins are saved indefinitely in `~/Library/Application Support/locoagent-chrome-profile-<target>`. Once logged in, Chrome can remain running or be auto-launched by OpenHarness whenever needed.
 
 ---
 
-## 🛠️ Social Tools Available to Jarvis
+## 🛠️ Social Tools in OpenHarness
 
-Jarvis calls these tools directly through WhatsApp via the standard `JARVIS_CALL` envelope:
+Agents invoke these tools via the OpenHarness REST API (`POST /execute`), CLI (`openharness execute`), or direct stdio worker:
 
 ### 1. Threads Operations (Default)
 - **Publish a Thread**:
   ```json
-  {"tool": "social_post", "args": {"platform": "threads", "text": "Building autonomous AI agent bridges with Bun and Python. Seamless CDP control feels like magic."}}
+  {"tool": "social_post", "args": {"platform": "threads", "text": "Building autonomous AI agent bridges with OpenHarness. Seamless CDP control feels like magic."}}
   ```
-  *(Captures screenshot and sends back to WhatsApp)*
+  *(Captures screenshot and returns confirmation)*
 - **Reply to a Thread**:
   ```json
   {"tool": "social_reply", "args": {"platform": "threads", "url": "https://www.threads.net/@user/post/xyz", "text": "Spot on. Latency optimization is key for local agent loops."}}
@@ -144,18 +144,10 @@ Jarvis calls these tools directly through WhatsApp via the standard `JARVIS_CALL
 ## 🎨 Persona & Anti-Bot Safeguards
 
 1. **`persona/persona.md`**:
-   - Defines your technical tone of voice, formatting guidelines, and no-spam rules.
+   - Defines technical tone of voice, formatting guidelines, and no-spam rules.
 2. **`persona/tasks.md`**:
-   - Daily morning, afternoon, and evening routine guidelines centered around Threads and Reddit.
+   - Routine guidelines centered around Threads and Reddit.
 3. **`persona/operation-log.json`**:
    - Persistent ledger ensuring no URL is liked, upvoted, or replied to more than once.
-4. **One-Time Style Calibration (Playbook 0)**:
-   - Jarvis conducts a one-time onboarding inspection of all previous posts on Threads (`@hamdankhubaib.code`) and Reddit (`u/Quirky-Low-7500`) to extract and mirror your authentic tone, vocabulary, and formatting rather than choosing a generic style.
-
----
-
-## 📖 Operational Playbooks for Jarvis
-
-For complete step-by-step playbooks, persona voice guidelines, and exact `JARVIS_CALL` payload examples for WhatsApp:
-👉 See **[docs/JARVIS_INSTRUCTIONS.md (Section 4: How to Operate Hamdan's Social Media)](JARVIS_INSTRUCTIONS.md)**.
-
+4. **Style Calibration**:
+   - Agents can inspect past posts on Threads (`@hamdankhubaib.code`) and Reddit (`u/Quirky-Low-7500`) to extract and mirror authentic tone, vocabulary, and formatting rather than choosing a generic style.

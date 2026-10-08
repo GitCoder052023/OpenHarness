@@ -1,8 +1,7 @@
-"""Firecrawl Adapter for OpenAgent.
+"""Firecrawl Adapter for OpenHarness (by OpenAgent).
 
 Integrates the self-hosted Firecrawl web ingestion, crawling, mapping, and
-extraction engine directly into OpenAgent. Enables external intelligence
-(Instinct / Jarvis) to:
+extraction engine directly into OpenHarness. Enables external intelligence to:
 - Scrape dynamic web pages into clean, LLM-ready Markdown in a single shot
 - Perform web searches that return full Markdown contents from top results
 - Crawl entire domains or doc trees recursively in the background
@@ -22,7 +21,7 @@ import urllib.request
 from typing import Any, Dict, List, Optional, Union
 from urllib.parse import urlparse
 
-logger = logging.getLogger("openagent.firecrawl_adapter")
+logger = logging.getLogger("openharness.firecrawl_adapter")
 
 PROHIBITED_FIRECRAWL_DOMAINS = {
     "web.whatsapp.com",
@@ -37,7 +36,7 @@ class FirecrawlError(Exception):
 
 
 def _check_url_allowed(url: Optional[str]) -> None:
-    """Ensure the target URL does not target WhatsApp communication endpoints."""
+    """Ensure the target URL does not target reserved communication endpoints."""
     if not url:
         return
     parsed = urlparse(url if "://" in url else f"http://{url}")
@@ -45,12 +44,12 @@ def _check_url_allowed(url: Optional[str]) -> None:
     for prohibited in PROHIBITED_FIRECRAWL_DOMAINS:
         if host == prohibited or host.endswith("." + prohibited):
             raise FirecrawlError(
-                f"Targeting '{url}' is prohibited. WhatsApp domains are reserved to protect bridge communication."
+                f"Targeting '{url}' is prohibited."
             )
 
 
 class FirecrawlAdapter:
-    """High-level adapter wrapping self-hosted Firecrawl API for OpenAgent."""
+    """High-level adapter wrapping self-hosted Firecrawl API for OpenHarness."""
 
     def __init__(
         self,
@@ -68,14 +67,14 @@ class FirecrawlAdapter:
         path: str,
         payload: Optional[Dict[str, Any]] = None,
         timeout: Optional[float] = None,
-    ) -> Dict[str, Any]:
+    ):
         """Perform an HTTP request against the Firecrawl REST API."""
         url = f"{self.api_url}/{path.lstrip('/')}"
         data = None
         headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": "OpenAgent-FirecrawlAdapter/1.0",
+            "User-Agent": "OpenHarness-FirecrawlAdapter/1.0",
         }
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"

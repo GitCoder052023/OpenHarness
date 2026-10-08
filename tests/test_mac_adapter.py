@@ -1,9 +1,9 @@
-"""Unit and integration tests for MacAdapter in OpenAgent."""
+"""Unit and integration tests for MacAdapter in OpenHarness."""
 
 import pytest
 from unittest.mock import MagicMock, patch
 from macos_harness.macos import MacOSError
-from OpenAgent.mac_adapter import MacAdapter, _check_target_allowed, PROHIBITED_TARGETS
+from openharness.mac_adapter import MacAdapter, _check_target_allowed, PROHIBITED_TARGETS
 
 
 def test_whatsapp_target_allowed():
@@ -20,7 +20,7 @@ def test_whatsapp_target_allowed():
 
 def test_custom_prohibited_targets_enforced():
     """Ensure explicitly configured prohibited targets raise MacOSError."""
-    with patch("OpenAgent.mac_adapter.PROHIBITED_TARGETS", {"restricted_app"}):
+    with patch("openharness.mac_adapter.PROHIBITED_TARGETS", {"restricted_app"}):
         with pytest.raises(MacOSError, match="prohibited"):
             _check_target_allowed("restricted_app")
 

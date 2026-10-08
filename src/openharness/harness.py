@@ -1,4 +1,4 @@
-"""Connection channel between OpenAgent and the headless harness.
+"""Connection channel between OpenHarness and the headless execution harness.
 
 Spawns the headless execution harness over stdio IPC and exposes type-safe operational tools:
 - bash: Execute shell commands with timeout and output capture
@@ -21,7 +21,7 @@ import threading
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-logger = logging.getLogger("openagent.harness")
+logger = logging.getLogger("openharness.harness")
 
 
 class HarnessError(Exception):

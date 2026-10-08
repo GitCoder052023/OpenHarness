@@ -1,10 +1,10 @@
-"""Tool call parser, executor, and formatter for OpenAgent over WhatsApp.
+"""Tool call parser, executor, and normalizer for OpenHarness (by OpenAgent).
 
-Enables Jarvis (the remote AI on WhatsApp) to invoke local Mac harness tools:
-1. Jarvis sends a message containing a tool call (e.g. ```json {"tool": "bash", "args": {"command": "git status"}}```).
-2. OpenAgent intercepts the message.
+Enables any AI model or agent framework to invoke local Mac harness tools:
+1. Model sends a tool call (JSON, OpenAI function calling, or Anthropic tool_use).
+2. OpenHarness normalizes and dispatches the call.
 3. The harness executes the tool on the local Mac.
-4. The bridge formats the execution result and sends it back to WhatsApp as text.
+4. OpenHarness formats and returns the execution result.
 """
 
 import ast
@@ -113,9 +113,10 @@ MAX_WHATSAPP_RESPONSE_LEN = 3500
 # base64 payload are tolerated.
 
 ENVELOPE_PREFIX = "JARVIS_CALL:"
+OPENHARNESS_ENVELOPE_PREFIX = "OPENHARNESS_CALL:"
 ENVELOPE_SUFFIX = ":END"
 _ENVELOPE_RE = re.compile(
-    re.escape(ENVELOPE_PREFIX) + r"([A-Za-z0-9+/=\s]+)" + re.escape(ENVELOPE_SUFFIX)
+    r"(?:JARVIS_CALL:|OPENHARNESS_CALL:)([A-Za-z0-9+/=\s]+)" + re.escape(ENVELOPE_SUFFIX)
 )
 
 # Characters WhatsApp rendering / mobile keyboards inject that break naive parsing.
@@ -1134,12 +1135,12 @@ def execute_tool_call(
 
 
 
-def format_tool_response(response: Dict[str, Any], max_length: int = MAX_WHATSAPP_RESPONSE_LEN, prefix_header: str = "") -> str:
-    """Format an execution result into a readable markdown response for Jarvis on WhatsApp."""
+def format_tool_response(response: Dict[str, Any], max_length: int = MAX_RESPONSE_LEN, prefix_header: str = "") -> str:
+    """Format an execution result into a readable markdown response for OpenHarness."""
     tool = response.get("tool", "unknown")
     status = response.get("status", "unknown")
 
-    header = prefix_header or f"[Jarvis Tool Response: {tool} | status: {status}]"
+    header = prefix_header or f"[OpenHarness Tool Response: {tool} | status: {status}]"
 
     if status == "error":
         error_msg = response.get("error", "Unknown error")
@@ -1464,10 +1465,10 @@ def format_tool_response(response: Dict[str, Any], max_length: int = MAX_WHATSAP
     return full_message
 
 
-def format_tool_responses(responses: List[Dict[str, Any]], max_length: int = MAX_WHATSAPP_RESPONSE_LEN) -> str:
-    """Format one or more execution results for WhatsApp."""
+def format_tool_responses(responses: List[Dict[str, Any]], max_length: int = MAX_RESPONSE_LEN) -> str:
+    """Format one or more execution results for OpenHarness."""
     if not responses:
-        return "[Jarvis Tool Response: None]"
+        return "[OpenHarness Tool Response: None]"
 
     if len(responses) == 1:
         return format_tool_response(responses[0], max_length=max_length)
@@ -1478,7 +1479,7 @@ def format_tool_responses(responses: List[Dict[str, Any]], max_length: int = MAX
     for i, resp in enumerate(responses, 1):
         tool = resp.get("tool", "unknown")
         status = resp.get("status", "unknown")
-        header = f"[Jarvis Tool Response {i}/{total}: {tool} | status: {status}]"
+        header = f"[OpenHarness Tool Response {i}/{total}: {tool} | status: {status}]"
         parts.append(format_tool_response(resp, max_length=per_item_max, prefix_header=header))
 
     combined = "\n\n".join(parts)
