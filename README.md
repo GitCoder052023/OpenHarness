@@ -13,11 +13,12 @@ Expose 55+ developer, native desktop, browser, web scraping, and social automati
 [![Bun](https://img.shields.io/badge/runtime-bun-black.svg?style=flat-square&logo=bun)](https://bun.sh)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg?style=flat-square&logo=python)](https://www.python.org/)
 [![uv](https://img.shields.io/badge/package%20manager-uv-blueviolet.svg?style=flat-square)](https://astral.sh/uv)
+[![skills.sh](https://skills.sh/b/GitCoder052023/OpenHarness)](https://skills.sh/GitCoder052023/OpenHarness)
 [![Tests](https://img.shields.io/badge/tests-117%20passing-brightgreen.svg?style=flat-square)]()
 [![License: MIT](https://img.shields.io/badge/license-MIT-purple.svg?style=flat-square)](LICENSE)
 [![By OpenAgent](https://img.shields.io/badge/by-OpenAgent-orange.svg?style=flat-square)](https://github.com/GitCoder052023/OpenAgent)
 
-[Why OpenHarness](#why-openharness) · [How It Works](#how-it-works) · [Engines & Tools](#core-engines--tools) · [Connect AI Agents (MCP)](#use-openharness-with-ai-agents-mcp) · [Local API Server](#local-api-server-direct-http-access) · [Documentation](#documentation)
+[Why OpenHarness](#why-openharness) · [How It Works](#how-it-works) · [Engines & Tools](#core-engines--tools) · [Agent Skill](#installable-agent-skill) · [Connect AI Agents (MCP)](#use-openharness-with-ai-agents-mcp) · [Local API Server](#local-api-server-direct-http-access) · [Documentation](#documentation)
 
 </div>
 
@@ -134,6 +135,32 @@ OpenHarness gives your AI agent direct access to **55+ tools** across 5 speciali
 | **Real Browser Control** | Authenticated Chrome control via CDP: background tabs, compositor clicks through iframes and shadow DOM, framework-safe form filling | `browser_open`, `browser_info`, `browser_click`, `browser_fill`, `browser_type`, `browser_key`, `browser_scroll`, `browser_tabs`, `browser_see`, `browser_eval` |
 | **Web Ingestion & Scraping** | Scrape dynamic web pages directly into clean LLM Markdown, full web search, recursive domain crawling, sitemaps, JSON schema extraction | `firecrawl_scrape`, `firecrawl_search`, `firecrawl_crawl`, `firecrawl_status`, `firecrawl_map`, `firecrawl_extract`, `firecrawl_doctor` |
 | **Social Media Automation** | Persistent Chrome sessions on Threads, Reddit, X, LinkedIn, Instagram, YouTube, TikTok: publishing, anti-deduplication checks, replies, screenshot verification | `social_targets`, `social_setup`, `social_post`, `social_reply`, `social_like`, `social_search`, `social_screenshot`, `social_dedup_check`, `social_agent_task` |
+
+---
+
+## Installable Agent Skill
+
+OpenHarness includes a portable, standard **Agent Skill** designed for the OpenAgent ecosystem
+
+### Installation
+
+Install the skill into your project or agent environment using the standard Skills CLI:
+
+```bash
+npx skills add GitCoder052023/OpenHarness
+```
+
+Or install the specific `openharness` skill explicitly:
+
+```bash
+npx skills add GitCoder052023/OpenHarness --skill openharness
+```
+
+To install globally across all configured agents:
+
+```bash
+npx skills add GitCoder052023/OpenHarness -g
+```
 
 ---
 
