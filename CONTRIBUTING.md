@@ -50,10 +50,10 @@ npm test
 ## Adding New Tools
 
 OpenHarness tools can be added across the five engines:
-1. **Developer Tools**: Add primitives to `src/tools/cli-harness/harness-bridge.ts` and wrap in `src/openharness/harness.py`.
+1. **Developer Tools**: Add primitives to `src/tools/cli-harness/harness-bridge.ts` and wrap in `src/OpenHarness/harness.py`.
 2. **Native macOS Tools**: Extend `src/tools/macos-harness/src/macos_harness/`.
 3. **Browser Tools**: Extend `src/tools/browser-harness/src/browser_harness/`.
-4. **Dispatcher**: Register execution in `src/openharness/dispatcher.py`.
+4. **Dispatcher**: Register execution in `src/OpenHarness/dispatcher.py`.
 5. **API Manifest**: Add schema and description to `server/tools-manifest.js`.
 6. **Tests**: Add unit test coverage in `tests/`.
 
