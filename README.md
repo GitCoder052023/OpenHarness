@@ -5,8 +5,9 @@
 # OpenHarness ⌘
 ### By [OpenAgent](https://github.com/GitCoder052023/OpenAgent)
 
-**The unified, model-agnostic macOS execution harness for autonomous agents.**<br/>
-Expose 55+ developer, native desktop, browser, web scraping, and social automation tools to **Claude, Gemini, Codex, local models, and agent frameworks** via a lightweight Node.js API server.
+**Bring your own brain.**<br/>
+Claude, Gemini, Codex, or a local Ollama model. Give your agent hands on your Mac.
+OpenHarness connects it to 55+ tools for code, native apps, Chrome, the web, and social accounts.
 
 [![macOS](https://img.shields.io/badge/platform-macOS%20Darwin-lightgrey.svg?style=flat-square&logo=apple)](https://apple.com)
 [![Node.js](https://img.shields.io/badge/runtime-node.js%2018%2B-green.svg?style=flat-square&logo=node.js)](https://nodejs.org/)
@@ -18,31 +19,69 @@ Expose 55+ developer, native desktop, browser, web scraping, and social automati
 [![License: MIT](https://img.shields.io/badge/license-MIT-purple.svg?style=flat-square)](LICENSE)
 [![By OpenAgent](https://img.shields.io/badge/by-OpenAgent-orange.svg?style=flat-square)](https://github.com/GitCoder052023/OpenAgent)
 
-[Why OpenHarness](#why-openharness) · [How It Works](#how-it-works) · [Engines & Tools](#core-engines--tools) · [Agent Skill](#installable-agent-skill) · [Connect AI Agents (MCP)](#use-openharness-with-ai-agents-mcp) · [Local API Server](#local-api-server-direct-http-access) · [Documentation](#documentation)
+[Quick Start](#quick-start-60-seconds) · [Why OpenHarness](#why-openharness) · [How It Works](#how-it-works) · [Engines & Tools](#core-engines--tools) · [Agent Skill](#installable-agent-skill) · [Connect AI Agents (MCP)](#use-openharness-with-ai-agents-mcp) · [Local API Server](#local-api-server-direct-http-access) · [Documentation](#documentation)
 
 </div>
 
 ---
 
-## What is OpenHarness?
+OpenHarness is the execution engine under [OpenAgent](https://github.com/GitCoder052023/OpenAgent), available on its own. Connect your model through MCP or HTTP; it chooses the tools, and OpenHarness runs them on your Mac.
 
-**OpenHarness is the headless, model-agnostic execution engine created by [OpenAgent](https://github.com/GitCoder052023/OpenAgent).**
+Your model does the thinking. Your machine does the work.
 
-While **OpenAgent** is the voice-driven, hands-free personal assistant body for Instinct over WhatsApp Desktop (handling microphone input, Vosk wake-word detection, Whisper speech-to-text, and messaging transports), **OpenHarness** is the top-level execution harness extracted into its own clean, dedicated repository.
+### From chat to your Mac
 
-Just like **Next.js** or **Skills** is by **Vercel**, **OpenHarness is by OpenAgent**.
+An example session in an MCP client such as Claude Desktop or Cursor, with the API server running:
 
-### The Motivation
+```text
+You:       "Run the tests in this repo. If one fails, read the failing test
+            and open it in my editor. Show me the editor window."
 
-In OpenAgent, Jarvis and Instinct leverage a battle-tested harness of 55+ local tools to operate macOS, control authenticated Chrome, edit code, crawl the web, and manage social media. 
+Agent:      bash          pnpm test                 one test fails
+            read          failing test file         inspect the assertion
+            bash          open the file in editor   file on your Mac
+            mac_see       editor window             screenshot returned
 
-Previously, anyone who wanted to give those powerful capabilities to other models—such as **Claude, Gemini, OpenAI / Codex, DeepSeek, or local Ollama models**—had to clone the entire OpenAgent repository and manually strip out WhatsApp automation, accessibility scrapers, audio loops, and speech models.
+Agent:     "Here's the failing assertion, and the file is open in your editor."
 
-**OpenHarness solves this completely:**
-- **Zero WhatsApp or Audio Bloat:** The codebase is cleaned and dedicated purely to harness execution.
-- **Model-Agnostic:** Any LLM, UI, agent framework, or backend can connect immediately.
-- **Lightweight Node.js + TypeScript API:** Exposes execution capabilities over standard HTTP (`GET /health`, `POST /api/execute`).
-- **Sub-Millisecond IPC Dispatch:** Uses a persistent stdio JSON worker keeping adapters warm in memory.
+You:       "Suggest a fix first. Don't change anything yet."
+```
+
+This is an illustrative workflow, not a recorded test run. The agent decides what to call and how to present the results; OpenHarness handles local execution.
+
+<div align="center">
+  <strong>You bring the brain. OpenHarness brings the hands.</strong>
+</div>
+
+---
+
+## Quick Start (60 Seconds)
+
+1. **Clone & install**:
+   ```bash
+   git clone https://github.com/GitCoder052023/OpenHarness.git
+   cd OpenHarness
+   pnpm install && ./install.py
+   ```
+2. **Start the OpenHarness API Server** (in a dedicated terminal):
+   ```bash
+   pnpm run server
+   ```
+3. **Configure your AI client**: Add the `openharness` server block to your client's MCP configuration file (see [MCP Client Configuration](#mcp-client-configuration) below).
+4. **Reload your AI client**: Restart Claude Desktop, Cursor, or your agent.
+5. **Ask a harmless test question**:
+   > *"Use OpenHarness to report my machine's system information."*
+6. **Verify the result**: Your agent calls `openharness_execute` and reports real local system data.
+
+---
+
+## Why OpenHarness
+
+A model can explain a failing test. Getting it to run that test on your Mac, read the file, and inspect the app is a different problem.
+
+OpenAgent already had the tools for that. But using them with another model meant bringing along its WhatsApp transport, microphone loop, wake-word detection, and speech models too.
+
+OpenHarness separates the execution engine from the assistant. Keep the 55+ tools and five engines; leave the voice and messaging setup behind. Use an MCP client, call the HTTP API from your own app, or connect a local model through your agent framework. There is no built-in LLM loop and no required model provider.
 
 ### The Core Problem: Reasoning vs. Execution
 
@@ -67,11 +106,9 @@ Without OpenHarness                      With OpenHarness
                                          └──────────────────┘
 ```
 
-> **OpenHarness gives compatible AI agents a standardized interface for interacting with capabilities available on your local machine.**
+OpenHarness does not decide what to do next. Your agent owns the plan, permissions, and conversation; OpenHarness supplies the tools.
 
-It does not attempt to be an autonomous agent itself, nor does it run proprietary LLM loops. Instead, it provides the solid execution foundation that makes autonomous agents possible.
-
-### Understanding the Architecture: Skill vs MCP vs API vs Worker
+### Skill, MCP, API, and Worker
 
 OpenHarness provides distinct interfaces depending on what is connecting to it:
 
@@ -140,7 +177,7 @@ OpenHarness gives your AI agent direct access to **55+ tools** across 5 speciali
 
 ## Installable Agent Skill
 
-OpenHarness includes a portable, standard **Agent Skill** designed for the OpenAgent ecosystem
+OpenHarness includes an **Agent Skill** that teaches your agent which tools to use and what arguments they expect.
 
 ### Installation
 
@@ -166,9 +203,9 @@ npx skills add GitCoder052023/OpenHarness -g
 
 ## Use OpenHarness with AI Agents (MCP)
 
-AI models are exceptionally good at reasoning, planning, and coding, but they need a standardized bridge to actually interact with your computer. OpenHarness provides that bridge through the **Model Context Protocol (MCP)**.
+The **Model Context Protocol (MCP)** lets your existing AI client call OpenHarness tools without a custom integration.
 
-With OpenHarness connected via MCP, an AI agent running in **Claude Desktop, Cursor, Zed, Goose, or custom agent frameworks** can safely execute local developer tools, inspect your macOS desktop, control authenticated Chrome, crawl web pages, and automate repetitive workflows.
+With OpenHarness connected via MCP, an AI agent running in **Claude Desktop, Cursor, Zed, Goose, or custom agent frameworks** can execute local developer tools, inspect your macOS desktop, control authenticated Chrome, crawl web pages, and automate repetitive workflows.
 
 ```text
 ┌────────────────────────┐
@@ -202,26 +239,6 @@ With OpenHarness connected via MCP, an AI agent running in **Claude Desktop, Cur
 ```
 
 The MCP connector acts strictly as a **protocol adapter**. It receives standardized MCP tool calls over `stdio`, sends them to the local OpenHarness API server over HTTP, and formats the execution results for the model.
-
----
-
-### Quick Start (60 Seconds)
-
-1. **Clone & install**:
-   ```bash
-   git clone https://github.com/GitCoder052023/OpenHarness.git
-   cd OpenHarness
-   pnpm install && ./install.py
-   ```
-2. **Start the OpenHarness API Server** (in a dedicated terminal):
-   ```bash
-   pnpm run server
-   ```
-3. **Configure your AI client**: Add the `openharness` server block to your client's MCP configuration file (see [MCP Client Configuration](#mcp-client-configuration) below).
-4. **Reload your AI client**: Restart Claude Desktop, Cursor, or your agent.
-5. **Ask a harmless test question**:
-   > *"Use OpenHarness to report my machine's system information."*
-6. **Verify the result**: Your agent calls `openharness_execute` and reports real local system data.
 
 ---
 
@@ -282,7 +299,7 @@ AI Client Host (Claude Desktop, Cursor, IDE)
    Keep this running in a terminal or background service while using OpenHarness.
 
 2. **Process 2: OpenHarness MCP Connector (`src/mcp`)**
-   The protocol bridge. Your AI client launches this process automatically over `stdio` based on your MCP configuration. It does **not** manage or spawn the API server—it assumes the API server is already running on `http://127.0.0.1:8080`.
+   The protocol bridge. Your AI client launches this process automatically over `stdio` based on your MCP configuration. It does **not** manage or spawn the API server - it assumes the API server is already running on `http://127.0.0.1:8080`.
 
 ---
 
@@ -350,7 +367,7 @@ The connector exposes a single, unified execution tool:
 
 ### What the User Experiences
 
-When you chat with an MCP-enabled agent connected to OpenHarness, the interaction feels seamless and conversational:
+With an MCP client connected, a request becomes a local tool call:
 
 ```text
 User:
@@ -371,7 +388,7 @@ AI Agent:
 
 ### What OpenHarness Can Actually Do
 
-OpenHarness exposes **55+ specialized tools** across 5 battle-tested execution engines:
+OpenHarness exposes **55+ specialized tools** across 5 execution engines:
 
 1. **Developer & Shell Automation**:
    - `system_info`: Inspect OS, CPU, memory, uptime, battery, and platform details.
@@ -750,16 +767,18 @@ console.log(result);
 
 ## Documentation
 
-- [Social Media Automation](docs/SOCIAL_MEDIA_AUTOMATION.md) — Guide for LocoAgent browser profiles on Threads and Reddit.
-- [Contributing Guide](CONTRIBUTING.md) — Development workflow and how to add new tools.
+- [Social Media Automation](docs/SOCIAL_MEDIA_AUTOMATION.md) - Guide for LocoAgent browser profiles on Threads and Reddit.
+- [Contributing Guide](CONTRIBUTING.md) - Development workflow and how to add new tools.
 
 ---
 
-## Credits & Hierarchy
+## The OpenAgent family
 
-* **[OpenAgent](https://github.com/GitCoder052023/OpenAgent)** — The parent project and inspiration for OpenHarness. OpenAgent is the always-listening, hands-free personal assistant for Instinct over WhatsApp.
-* **OpenHarness** is developed and maintained as part of the OpenAgent ecosystem.
-* Built with gratitude to **OpenCode**, **Browser Use**, **Firecrawl**, and **LocoAgent**.
+[OpenAgent](https://github.com/GitCoder052023/OpenAgent) is the assistant: wake it with your voice and talk while it operates your Mac through Instinct over WhatsApp. **OpenHarness is the engine underneath**, published separately so you can use those execution tools with your own model or app.
+
+Want the hands-free assistant? Start with OpenAgent. Already have an agent you like? Connect it to OpenHarness.
+
+OpenHarness is developed and maintained as part of the OpenAgent ecosystem. Built on work from **OpenCode**, **Browser Use**, **Firecrawl**, and **LocoAgent**.
 
 ---
 
