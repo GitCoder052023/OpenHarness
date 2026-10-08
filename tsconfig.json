@@ -9,8 +9,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
-    "rootDir": "./src/server"
+    "rootDir": "./src"
   },
-  "include": ["src/server/**/*"],
+  "include": ["src/server/**/*", "src/mcp/**/*"],
   "exclude": ["node_modules", "src/tools"]
 }

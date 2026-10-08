@@ -11,8 +11,11 @@
     "start": "tsx src/server/index.ts",
     "dev": "tsx watch src/server/index.ts",
     "server": "tsx src/server/index.ts",
+    "mcp": "tsx src/mcp/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/server/__tests__/*.test.ts",
+    "test": "tsx --test src/server/__tests__/*.test.ts src/mcp/__tests__/*.test.ts",
+    "test:server": "tsx --test src/server/__tests__/*.test.ts",
+    "test:mcp": "tsx --test src/mcp/__tests__/*.test.ts",
     "prepare": "husky"
   },
   "keywords": [
@@ -29,6 +32,7 @@
   "author": "OpenAgent Team",
   "license": "MIT",
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "express": "^5.2.1"
   },
   "devDependencies": {
