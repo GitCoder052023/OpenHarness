@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
 ==============================================================================
-⚡ OPENAGENT - ONE-COMMAND COMPREHENSIVE TEST RUNNER
+⚡ OPENHARNESS - COMPREHENSIVE TEST RUNNER
+   By OpenAgent
 ==============================================================================
-Runs and orchestrates all test suites, live harness checks, and diagnostics:
-1. Unit test suite via pytest (tests/ - 160+ passing tests).
+Runs and orchestrates all test suites, live harness checks, and API tests:
+1. Unit test suite via pytest (tests/ - harness, adapters, dispatchers).
 2. Live headless Bun harness stdio IPC verification.
 3. Native macOS computer-use adapter verification (MacAdapter).
 4. Real Browser CDP adapter verification (BrowserAdapter).
-5. Audio recording & SoX utility pipeline verification.
-6. WhatsApp & Accessibility permission readiness check.
+5. Node.js REST API Server test suite (server/test.js).
 Outputs a clean visual test report dashboard with timing & exit codes.
 ==============================================================================
 """
@@ -19,14 +19,13 @@ import os
 import shutil
 import subprocess
 import sys
-import tempfile
 import time
 from pathlib import Path
 from typing import Dict, List, Tuple
 
 ROOT_DIR = Path(__file__).resolve().parent
 
-# ANSI Colors
+
 class Style:
     BOLD = "\033[1m"
     DIM = "\033[2m"
@@ -63,15 +62,17 @@ def run_bun_harness_test() -> Tuple[bool, str, float]:
     t0 = time.time()
     script = """
 import sys
-from OpenAgent.harness import Harness
-with Harness() as h:
-    info = h.system_info()
-    assert info.get('platform') == 'darwin'
-    res = h.bash('echo \"harness_ipc_ok\"')
-    assert res['exit_code'] == 0 and 'harness_ipc_ok' in res['output']
+from openharness.harness import Harness
+h = Harness()
+info = h.system_info()
+assert info.get('platform') == 'darwin'
+res = h.bash('echo "harness_ipc_ok"')
+assert res['exit_code'] == 0 and 'harness_ipc_ok' in res['output']
+h.close()
 print('BUN_HARNESS_PASSED')
 """
-    res = subprocess.run([get_venv_python(), "-c", script], cwd=str(ROOT_DIR), capture_output=True, text=True)
+    cmd = ["uv", "run", "python", "-c", script] if shutil.which("uv") else [get_venv_python(), "-c", script]
+    res = subprocess.run(cmd, cwd=str(ROOT_DIR), capture_output=True, text=True)
     duration = time.time() - t0
     passed = "BUN_HARNESS_PASSED" in res.stdout
     output = (res.stdout + "\n" + res.stderr).strip()
@@ -82,11 +83,12 @@ def run_mac_adapter_test() -> Tuple[bool, str, float]:
     """Verifies native macOS computer-use adapter."""
     t0 = time.time()
     script = """
-from OpenAgent.mac_adapter import MacAdapter
+from openharness.mac_adapter import MacAdapter
 adapter = MacAdapter()
 print('MAC_ADAPTER_PASSED')
 """
-    res = subprocess.run([get_venv_python(), "-c", script], cwd=str(ROOT_DIR), capture_output=True, text=True)
+    cmd = ["uv", "run", "python", "-c", script] if shutil.which("uv") else [get_venv_python(), "-c", script]
+    res = subprocess.run(cmd, cwd=str(ROOT_DIR), capture_output=True, text=True)
     duration = time.time() - t0
     passed = "MAC_ADAPTER_PASSED" in res.stdout
     output = (res.stdout + "\n" + res.stderr).strip()
@@ -97,136 +99,88 @@ def run_browser_adapter_test() -> Tuple[bool, str, float]:
     """Verifies Browser Harness CDP adapter."""
     t0 = time.time()
     script = """
-import browser_harness
-from OpenAgent.browser_adapter import BrowserAdapter
+from openharness.browser_adapter import BrowserAdapter
 b = BrowserAdapter()
 print('BROWSER_ADAPTER_PASSED')
 """
-    res = subprocess.run([get_venv_python(), "-c", script], cwd=str(ROOT_DIR), capture_output=True, text=True)
+    cmd = ["uv", "run", "python", "-c", script] if shutil.which("uv") else [get_venv_python(), "-c", script]
+    res = subprocess.run(cmd, cwd=str(ROOT_DIR), capture_output=True, text=True)
     duration = time.time() - t0
     passed = "BROWSER_ADAPTER_PASSED" in res.stdout
     output = (res.stdout + "\n" + res.stderr).strip()
     return passed, output, duration
 
 
-def run_audio_pipeline_test() -> Tuple[bool, str, float]:
-    """Verifies SoX audio recording utility and checks audio encoding pipeline."""
+def run_api_server_test() -> Tuple[bool, str, float]:
+    """Verifies Node.js API server endpoints and execution."""
     t0 = time.time()
-    rec_bin = shutil.which("rec") or shutil.which("sox")
-    if not rec_bin:
-        return False, "Neither 'rec' nor 'sox' found in PATH", 0.0
-
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as tmp:
-        tmp_path = Path(tmp.name)
-        # Test 0.1s silence recording with SoX
-        test_cmd = [
-            rec_bin, "-q", "-c", "1", "-r", "16000", "-b", "16",
-            str(tmp_path), "trim", "0", "0.1"
-        ]
-        res = subprocess.run(test_cmd, capture_output=True, text=True, timeout=5)
-        duration = time.time() - t0
-        if tmp_path.exists() and tmp_path.stat().st_size > 0:
-            tmp_path.unlink(missing_ok=True)
-            return True, "SoX 16kHz mono audio recording operational", duration
-        else:
-            return False, f"Audio recording failed: {res.stderr.strip()}", duration
-
-
-def run_accessibility_test() -> Tuple[bool, str, float]:
-    """Verifies macOS Accessibility permission status."""
-    t0 = time.time()
-    script = """
-from ApplicationServices import AXIsProcessTrusted
-assert AXIsProcessTrusted() is True
-print('ACCESSIBILITY_TRUSTED')
-"""
-    res = subprocess.run([get_venv_python(), "-c", script], cwd=str(ROOT_DIR), capture_output=True, text=True)
+    res = subprocess.run(["node", "server/test.js"], cwd=str(ROOT_DIR), capture_output=True, text=True)
     duration = time.time() - t0
-    passed = "ACCESSIBILITY_TRUSTED" in res.stdout
-    output = "Accessibility trusted" if passed else "Accessibility untrusted"
+    passed = res.returncode == 0
+    output = (res.stdout + "\n" + res.stderr).strip()
     return passed, output, duration
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description="One-Command Comprehensive Test Runner for OpenAgent",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    parser.add_argument("--unit", action="store_true", help="Run only pytest unit tests")
-    parser.add_argument("--harness", action="store_true", help="Run only Bun CLI harness IPC tests")
-    parser.add_argument("--mac", action="store_true", help="Run only native macOS adapter tests")
-    parser.add_argument("--browser", action="store_true", help="Run only Browser adapter tests")
-    parser.add_argument("--audio", action="store_true", help="Run only SoX audio tests")
-    parser.add_argument("--all", dest="run_all", action="store_true", help="Run all test suites (default)")
-    parser.add_argument("--verbose", "-v", action="store_true", help="Display full test details & outputs")
-    return parser.parse_args()
-
-
 def main():
-    args = parse_args()
+    parser = argparse.ArgumentParser(description="Comprehensive OpenHarness Test Runner")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose test logs")
+    parser.add_argument("--unit", action="store_true", help="Run only pytest unit tests")
+    parser.add_argument("--harness", action="store_true", help="Run only Bun harness IPC test")
+    parser.add_argument("--server", action="store_true", help="Run only Node.js API server tests")
+    args = parser.parse_args()
 
     print(f"""{Style.BOLD}{Style.CYAN}
 ==============================================================================
-          ⚡ OPENAGENT - SYSTEM TEST RUNNER                  
+          ⌘ OPENHARNESS - COMPREHENSIVE TEST SUITE (by OpenAgent)
 =============================================================================={Style.RESET}""")
 
-    # Select suites to run
-    specific_suites = any([args.unit, args.harness, args.mac, args.browser, args.audio])
-    run_all = args.run_all or not specific_suites
-
-    suites_to_run = []
-    if run_all or args.unit:
-        suites_to_run.append(("Unit Test Suite (pytest)", run_unit_tests))
-    if run_all or args.harness:
-        suites_to_run.append(("Headless Bun Harness IPC", run_bun_harness_test))
-    if run_all or args.mac:
-        suites_to_run.append(("Native macOS Computer Adapter", run_mac_adapter_test))
-    if run_all or args.browser:
-        suites_to_run.append(("Browser Harness CDP Adapter", run_browser_adapter_test))
-    if run_all or args.audio:
-        suites_to_run.append(("Audio Capture Pipeline (SoX)", run_audio_pipeline_test))
-    if run_all:
-        suites_to_run.append(("macOS Accessibility Trusted", run_accessibility_test))
+    tests = []
+    if args.unit:
+        tests = [("Pytest Unit Tests", lambda: run_unit_tests(args.verbose))]
+    elif args.harness:
+        tests = [("Bun Harness Stdio IPC", run_bun_harness_test)]
+    elif args.server:
+        tests = [("Node.js API Server Endpoints", run_api_server_test)]
+    else:
+        tests = [
+            ("Pytest Unit Tests", lambda: run_unit_tests(args.verbose)),
+            ("Bun Harness Stdio IPC", run_bun_harness_test),
+            ("macOS Harness Adapter", run_mac_adapter_test),
+            ("Browser Harness Adapter", run_browser_adapter_test),
+            ("Node.js API Server Endpoints", run_api_server_test),
+        ]
 
     results = []
-    total_start = time.time()
+    all_passed = True
+    total_time = 0.0
 
-    for name, runner in suites_to_run:
-        print(f"Running {Style.BOLD}{name}{Style.RESET}...", end="", flush=True)
-        try:
-            if name.startswith("Unit Test"):
-                passed, output, duration = runner(verbose=args.verbose)
-            else:
-                passed, output, duration = runner()
-        except Exception as exc:
-            passed, output, duration = False, str(exc), 0.0
+    for name, test_fn in tests:
+        print(f"\n{Style.BOLD}Running: {name}...{Style.RESET}")
+        passed, out, duration = test_fn()
+        total_time += duration
+        results.append((name, passed, duration, out))
+        if passed:
+            print(f"  {Style.GREEN}✓ PASSED{Style.RESET} ({duration:.2f}s)")
+        else:
+            all_passed = False
+            print(f"  {Style.RED}✗ FAILED{Style.RESET} ({duration:.2f}s)")
+            if args.verbose or not args.unit:
+                for line in out.splitlines()[-10:]:
+                    print(f"    {Style.DIM}{line}{Style.RESET}")
 
-        status_str = f"{Style.GREEN}PASSED ✓{Style.RESET}" if passed else f"{Style.RED}FAILED ✗{Style.RESET}"
-        print(f"\r  [{status_str}] {name:<35} ({duration:.2f}s)")
-        results.append((name, passed, output, duration))
-
-    total_duration = time.time() - total_start
-    all_passed = all(r[1] for r in results)
-
-    print(f"\n{Style.BOLD}{'=' * 78}{Style.RESET}")
-    print(f"{Style.BOLD}TEST SUMMARY DASHBOARD{Style.RESET}")
-    print(f"{'-' * 78}")
-    for name, passed, output, duration in results:
-        badge = f"{Style.GREEN}PASS{Style.RESET}" if passed else f"{Style.RED}FAIL{Style.RESET}"
-        summary_line = output.splitlines()[-1] if output else ""
-        if len(summary_line) > 35:
-            summary_line = summary_line[:32] + "..."
-        print(f"  [{badge}] {name:<35} {duration:>6.2f}s  {Style.DIM}{summary_line}{Style.RESET}")
-    print(f"{'-' * 78}")
-    print(f"Total Suites: {len(results)} | Duration: {total_duration:.2f}s")
-
+    print(f"\n{Style.BOLD}==============================================================================")
+    print("                         TEST REPORT SUMMARY")
+    print(f"=============================================================================={Style.RESET}")
+    for name, passed, duration, _ in results:
+        status = f"{Style.GREEN}PASS{Style.RESET}" if passed else f"{Style.RED}FAIL{Style.RESET}"
+        print(f"  [{status}]  {name:35s} ({duration:.2f}s)")
+    print(f"==============================================================================")
+    print(f"Total Time: {total_time:.2f}s")
     if all_passed:
-        print(f"{Style.BOLD}{Style.GREEN}🎉 ALL TEST SUITES PASSED PERFECTLY! System is 100% operational.{Style.RESET}\n")
+        print(f"{Style.BOLD}{Style.GREEN}ALL TESTS PASSED SUCCESSFULLY!{Style.RESET}\n")
         sys.exit(0)
     else:
-        print(f"{Style.BOLD}{Style.RED}⚠️  SOME TEST SUITES ENCOUNTERED FAILURES.{Style.RESET}")
-        if not args.verbose:
-            print("Run with '--verbose' to inspect full diagnostic tracebacks.\n")
+        print(f"{Style.BOLD}{Style.RED}SOME TESTS FAILED!{Style.RESET}\n")
         sys.exit(1)
 
 

@@ -29,14 +29,7 @@ def test_setup_config_file(tmp_path: Path):
         assert "FOO=BAR" in env_file.read_text()
 
 
-def test_download_models_existing(tmp_path: Path):
-    fake_root = tmp_path / "repo"
-    fake_root.mkdir()
-    models_dir = fake_root / "models"
-    models_dir.mkdir()
-    (models_dir / "ggml-base.bin").write_text("mock")
-    (models_dir / "vosk-model-small-en-us-0.15").mkdir()
-
-    with patch.object(install, "ROOT_DIR", fake_root):
-        ok = install.download_models(all_models=True)
-        assert ok is True
+def test_check_macos():
+    with patch("platform.system", return_value="Darwin"):
+        # Should not raise or exit
+        install.check_macos()

@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "OpenAgent"
+name = "openharness"
 version = "0.1.0"
-description = "Local push-to-talk bridge for WhatsApp Desktop on macOS"
+description = "OpenHarness by OpenAgent — The open execution harness for autonomous agents on macOS"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -18,7 +18,6 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
-voice = ["vosk==0.3.44", "sounddevice>=0.4.6"]
 
 [dependency-groups]
 dev = [
@@ -26,7 +25,8 @@ dev = [
 ]
 
 [project.scripts]
-OpenAgent = "OpenAgent.main:main"
+openharness = "openharness.cli:main"
+OpenHarness = "openharness.cli:main"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
@@ -34,7 +34,7 @@ testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["OpenAgent*"]
+include = ["openharness*", "OpenAgent*"]
 
 [tool.uv.sources]
 browser-harness = { workspace = true }
@@ -42,5 +42,3 @@ macos-harness = { workspace = true }
 
 [tool.uv.workspace]
 members = ["src/tools/macos-harness", "src/tools/browser-harness"]
-
-

@@ -1,11 +1,33 @@
 {
-  "name": "openagent",
-  "private": true,
-  "description": "Git commit validation tooling for OpenAgent",
-  "scripts": {
-    "prepare": "husky",
-    "lint:js": "cd src/tools/locoagent && bun run lint"
+  "name": "openharness",
+  "version": "1.0.0",
+  "description": "OpenHarness by OpenAgent — The open execution harness for autonomous agents on macOS",
+  "type": "module",
+  "main": "server/index.js",
+  "bin": {
+    "openharness-server": "server/index.js"
   },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "server": "node server/index.js",
+    "test": "node server/test.js",
+    "prepare": "husky"
+  },
+  "keywords": [
+    "openharness",
+    "openagent",
+    "agent-harness",
+    "llm-tools",
+    "claude",
+    "gemini",
+    "codex",
+    "mcp",
+    "macos",
+    "automation"
+  ],
+  "author": "OpenAgent Team",
+  "license": "MIT",
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
