@@ -17,7 +17,7 @@ Expose 55+ developer, native desktop, browser, web scraping, and social automati
 [![License: MIT](https://img.shields.io/badge/license-MIT-purple.svg?style=flat-square)](LICENSE)
 [![By OpenAgent](https://img.shields.io/badge/by-OpenAgent-orange.svg?style=flat-square)](https://github.com/GitCoder052023/OpenAgent)
 
-[Why OpenHarness](#why-openharness) · [Architecture](#how-it-works) · [Engines & Tools](#core-engines--tools) · [HTTP API Server](#http-api-server) · [Documentation](#documentation)
+[Why OpenHarness](#why-openharness) · [Architecture](#how-it-works) · [Engines & Tools](#core-engines--tools) · [Local API Server](#local-api-server) · [Documentation](#documentation)
 
 </div>
 
@@ -59,7 +59,7 @@ flowchart LR
 
     subgraph OpenHarness["OpenHarness"]
         API["Node.js API Server<br/>(http://localhost:8080)"]
-        IPC["Fast Stdio JSON-RPC Bridge"]
+        IPC["Persistent Stdio JSON IPC"]
         DISP["Universal Tool Dispatcher"]
         
         API --> IPC --> DISP
@@ -68,12 +68,12 @@ flowchart LR
     subgraph Engines["5 Battle-Tested Execution Engines"]
         E1["Developer Harness<br/>(bash, read, write, edit, grep, applescript)"]
         E2["macOS Computer-Use<br/>(AX tree, click, type, key, window capture)"]
-        E3["Real Browser Control<br/>(Chrome CDP, background tabs, domain skills)"]
+        E3["Real Browser Control<br/>(Chrome CDP, background tabs)"]
         E4["Web Ingestion<br/>(Firecrawl Markdown scraping & crawl)"]
         E5["Social Automation<br/>(LocoAgent persistent sessions & dedup)"]
     end
 
-    Clients -->|"HTTP REST /tools, /execute"| API
+    Clients -->|"HTTP POST /api/execute"| API
     DISP --> E1
     DISP --> E2
     DISP --> E3
@@ -97,36 +97,119 @@ OpenHarness gives your AI agent direct access to **55+ tools** across 5 speciali
 
 ---
 
-## HTTP API Server
+## Local API Server
 
-OpenHarness includes a lightweight Node.js + TypeScript + Express HTTP API server located under `./src/server`. It acts strictly as an execution transport layer over a persistent Python worker.
+OpenHarness provides a lightweight Node.js + TypeScript + Express HTTP server located under `./src/server`. It exposes local machine execution capabilities over HTTP for autonomous agents, external scripts, and local network clients.
 
-> [!WARNING]
-> **Security Notice**: This API exposes local execution capabilities (shell commands, file operations, system automation). By default, the server binds to `0.0.0.0` for local area network access. **Never expose this service to the public internet**; only run it on trusted local networks.
+The server functions strictly as an **execution transport layer**. A client submits a tool name and arguments via HTTP JSON. The server forwards the payload across a persistent stdio IPC connection to the underlying OpenHarness worker, executes the requested tool, and returns the result back to the client.
+
+The API server does not perform model inference, agent orchestration, prompt expansion, or tool translation. It is an unopinionated bridge between HTTP and OpenHarness execution.
+
+### Architecture
+
+```text
+Client
+  │
+  │ HTTP JSON (POST /api/execute)
+  ▼
+OpenHarness API Server (Node.js / Express)
+  │
+  │ Stdio JSON IPC (Request ID correlated)
+  ▼
+OpenHarness Worker (Persistent Python Process)
+  │
+  ▼
+OpenHarness Execution Layer (Dispatcher)
+  │
+  ▼
+Harness Engines (Developer, macOS, Browser, Web, Social)
+  │
+  ▼
+Execution Result
+  │
+  └───────────────────────────────► Client (HTTP JSON Response)
+```
+
+The Node.js server maintains a single, persistent Python worker process (`python -m openharness.worker`) across requests, avoiding process initialization overhead and keeping adapters warm in memory.
 
 ### Starting the Server
 
+Start the API server using pnpm:
+
 ```bash
-# Start server
+# Production / standard mode
 pnpm run server
 # or
 pnpm start
+
+# Development mode (with file watcher)
+pnpm run dev
+```
+
+During startup, the server boots the persistent Python worker, confirms readiness, and binds to the configured network interface:
+
+```text
+[INFO] Starting Python worker using /Users/hamdan/OpenHarness/.venv/bin/python...
+[INFO] Python worker is ready
+[INFO] OpenHarness API listening on http://0.0.0.0:8080
 ```
 
 ### Configuration
 
-The server binds to `0.0.0.0:8080` by default. Configure via environment variables:
+Server settings are configured via environment variables:
 
-- `OPENHARNESS_HOST`: Host interface to bind (default: `0.0.0.0`)
-- `OPENHARNESS_PORT`: Port to listen on (default: `8080`)
-- `OPENHARNESS_TIMEOUT_MS`: Request timeout in milliseconds (default: `120000`)
+| Variable | Default | Description |
+|---|---|---|
+| `OPENHARNESS_HOST` | `0.0.0.0` | Network interface to bind (`0.0.0.0` for LAN access, `127.0.0.1` for localhost only) |
+| `OPENHARNESS_PORT` | `8080` | Port number to listen on |
+| `OPENHARNESS_TIMEOUT_MS` | `120000` | Transport request timeout in milliseconds (default: 2 minutes) |
+| `OPENHARNESS_PYTHON` | Auto | Path to Python interpreter (defaults to `.venv/bin/python` or `python3`) |
 
-### Endpoints
+### Network Topology & LAN Access
+
+By default, the server binds to `0.0.0.0:8080`, allowing trusted devices on your local area network (LAN) to access OpenHarness:
+
+```text
+Host Machine (Mac running OpenHarness)
+       │
+       │ Wi-Fi / Ethernet LAN (0.0.0.0:8080)
+       ▼
+ ┌───────────────┬───────────────┬─────────────────────────┐
+ │               │               │                         │
+Laptop         Phone       AI Agent / Client        Dev Machine
+```
+
+Clients on the same local network can target the host machine's local IP address:
+```
+http://<your-host-lan-ip>:8080/api/execute
+```
+
+To restrict access exclusively to the local host machine, set `OPENHARNESS_HOST=127.0.0.1`.
+
+### Security Warning
+
+> [!WARNING]
+> **Security Notice**: The OpenHarness API server exposes arbitrary local execution capabilities (shell commands, file system read/write, native macOS automation) over unauthenticated HTTP.
+>
+> - **Trusted Networks Only**: Bind to `0.0.0.0` only on private, trusted local networks. Anyone who can reach this port can execute tools on the host machine.
+> - **Do Not Expose to the Internet**: Never forward port 8080 on your router or bind this service to a public IP address.
+> - **No Public Tunnels**: Do not put this service behind public tunneling tools (e.g., Cloudflare Tunnel, ngrok) without an authentication proxy.
+> - **Use Localhost When Possible**: If external LAN access is not required, set `OPENHARNESS_HOST=127.0.0.1`.
+
+### API Reference
 
 #### 1. Health Check
 
+Verifies that the HTTP process is running and reports the status of the background Python worker process without executing any tools.
+
 ```http
 GET /health
+```
+
+**Example Request:**
+
+```bash
+curl http://localhost:8080/health
 ```
 
 **Response (`200 OK`):**
@@ -138,12 +221,53 @@ GET /health
 }
 ```
 
-#### 2. Tool Execution
+If the Python worker has exited or failed to initialize, the endpoint returns:
+
+```json
+{
+  "status": "ok",
+  "worker": "unavailable"
+}
+```
+
+#### 2. Service Info
+
+Returns basic service metadata.
+
+```http
+GET /
+```
+
+**Example Request:**
+
+```bash
+curl http://localhost:8080/
+```
+
+**Response (`200 OK`):**
+
+```json
+{
+  "name": "OpenHarness API",
+  "status": "ok"
+}
+```
+
+#### 3. Execute a Tool
+
+Dispatches a tool call to the OpenHarness execution layer.
 
 ```http
 POST /api/execute
 Content-Type: application/json
 ```
+
+**Request Body:**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `tool` | `string` | Yes | Name of the tool to execute (e.g. `bash`, `read`, `write`, `grep`, `glob`, `applescript`, `system_info`) |
+| `args` | `object` | No | Tool arguments dictionary (defaults to `{}`) |
 
 **Request Example:**
 
@@ -156,7 +280,7 @@ Content-Type: application/json
 }
 ```
 
-**Response Example (Success):**
+**Response (`200 OK` - Success):**
 
 ```json
 {
@@ -164,7 +288,7 @@ Content-Type: application/json
   "tool": "bash",
   "result": {
     "exit_code": 0,
-    "output": "Darwin Kernel Version ...\n",
+    "output": "Darwin Kernel Version 24.3.0 ...\n",
     "timed_out": false,
     "truncated": false,
     "cwd": "/Users/hamdan/OpenHarness"
@@ -172,7 +296,13 @@ Content-Type: application/json
 }
 ```
 
-**Response Example (Execution Error):**
+### Error Handling
+
+The API clearly differentiates between **HTTP/API transport errors** and **tool execution errors**.
+
+#### Tool Execution Errors (`200 OK`)
+
+When a request is valid and the worker executes the tool, but the tool itself reports a failure (such as an unknown tool name, a non-zero exit code, or an invalid file path), the response retains the OpenHarness execution envelope:
 
 ```json
 {
@@ -180,6 +310,62 @@ Content-Type: application/json
   "tool": "bash",
   "error": "Command failed with exit code 1"
 }
+```
+
+#### HTTP / API Errors
+
+Client and server errors return an error JSON envelope with the corresponding HTTP status code:
+
+| Status Code | Reason | Example Response |
+|---|---|---|
+| `400 Bad Request` | Missing `tool`, non-object `args`, or malformed JSON | `{"status": "error", "error": "Field 'tool' must be a non-empty string"}` |
+| `404 Not Found` | Route does not exist | `{"status": "error", "error": "Route not found"}` |
+| `503 Service Unavailable` | Python worker crashed or is not ready | `{"status": "error", "error": "OpenHarness worker is unavailable"}` |
+| `500 Internal Server Error` | Transport timeout or unhandled server fault | `{"status": "error", "error": "Worker request timed out after 120000ms"}` |
+
+### Client Examples
+
+#### cURL
+
+```bash
+# 1. Check health
+curl -s http://localhost:8080/health
+
+# 2. Execute a shell command
+curl -s -X POST http://localhost:8080/api/execute \
+  -H "Content-Type: application/json" \
+  -d '{"tool": "bash", "args": {"command": "echo Hello from OpenHarness"}}'
+
+# 3. Read system information
+curl -s -X POST http://localhost:8080/api/execute \
+  -H "Content-Type: application/json" \
+  -d '{"tool": "system_info", "args": {}}'
+```
+
+#### JavaScript / TypeScript (Node.js Fetch)
+
+```ts
+async function executeTool(tool: string, args: Record<string, unknown> = {}) {
+  const response = await fetch("http://localhost:8080/api/execute", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ tool, args }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || data.status === "error") {
+    throw new Error(data.error || `Execution failed for tool: ${tool}`);
+  }
+
+  return data.result;
+}
+
+// Example usage
+const result = await executeTool("bash", { command: "uname -a" });
+console.log(result);
 ```
 
 ---
